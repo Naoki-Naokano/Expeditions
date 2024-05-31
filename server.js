@@ -110,23 +110,37 @@ io.on('connection', (socket) => {
   });
 
   // Периодическое обновление ресурсов
-  setInterval(async () => {
-    // Здесь можно добавить логику обновления ресурсов пользователя, если это необходимо.
-    // Например, увеличивать количество ресурсов на определённую величину
-    // или обновлять их из базы данных.
+setInterval(async () => {
+  // Получение всех пользователей
+  const usersQuery = 'SELECT id FROM users';
+  db.query(usersQuery, (err, users) => {
+    if (err) {
+      console.error('Ошибка получения пользователей:', err);
+      return;
+    }
 
-    // Пример обновления ресурсов каждого пользователя (упрощённый вариант):
-    /*const updateResourcesQuery = 'UPDATE resources SET amount = amount + 1 WHERE type = ?';
-    const resourceTypes = ['gold', 'wood', 'stone', 'clay'];
-
-    resourceTypes.forEach(type => {
-      db.query(updateResourcesQuery, [type], (err, result) => {
+    users.forEach(user => {
+      // Получение ресурсов пользователя
+      const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
+      db.query(resourcesQuery, [user.id], (err, resources) => {
         if (err) {
-          console.error('Ошибка обновления ресурсов:', err);
+          console.error('Ошибка получения ресурсов:', err);
           return;
         }
+
+        // Обновление ресурсов для данного пользователя на основе коэффициентов прироста
+        resources.forEach(resource => {
+          const updateResourcesQuery = 'UPDATE resources SET amount = amount + ? WHERE user_id = ? AND type = ?';
+
+          db.query(updateResourcesQuery, [resource.update_rate, user.id, resource.type], (err, result) => {
+            if (err) {
+              console.error(`Ошибка обновления ресурса ${resource.type} для пользователя ${user.id}:`, err);
+              return;
+            }
+          });
+        });
       });
-    });*/
+    });
 
     // Получение обновленных ресурсов для всех пользователей
     const allResourcesQuery = 'SELECT * FROM resources';
@@ -139,7 +153,8 @@ io.on('connection', (socket) => {
       // Отправка обновленных ресурсов всем подключенным клиентам
       io.emit('resourceUpdate', allResources);
     });
-  }, 5000); // Обновление каждые 5 секунд
+  });
+}, 5000); // Обновление каждые 5 секунд
 
   socket.on('disconnect', () => {
     console.log('Клиент отключен');
