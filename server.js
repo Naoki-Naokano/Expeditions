@@ -26,10 +26,7 @@ db.connect(err => {
 // Middleware для раздачи статических файлов
 app.use(express.static('public'));
 
-// Простой маршрут для проверки работы сервера
-app.get('/ping', (req, res) => {
-  res.send('pong');
-});
+const socketUserMap = {};
 
 // Обработка событий Socket.io
 io.on('connection', (socket) => {
@@ -39,28 +36,35 @@ io.on('connection', (socket) => {
     const { username, password, location } = data;
 
     const userInsertQuery = 'INSERT INTO users (username, password, location) VALUES (?, ?, ?)';
-    const resourcesInsertQuery = 'INSERT INTO resources (user_id, type, amount) VALUES (?, ?, ?)';
+    const resourcesInsertQuery = 'INSERT INTO resources (user_id, type, amount, update_rate) VALUES (?, ?, ?, ?)';
 
     // Вставка нового пользователя
     db.query(userInsertQuery, [username, password, location], (err, result) => {
       if (err) {
-        socket.emit('registerResponse', { success: false, message: 'Ошибка регистрации' });
+        // Проверяем, является ли ошибка ошибкой нарушения ограничения уникальности
+        if (err.code === 'ER_DUP_ENTRY') {
+          // Если ошибка вызвана дублированием записи, отправляем сообщение о существующем пользователе
+          socket.emit('registerResponse', { success: false, message: 'Имя пользователя уже существует' });
+        } else {
+          // В противном случае отправляем обычное сообщение об ошибке
+          socket.emit('registerResponse', { success: false, message: 'Ошибка регистрации' });
+        }
         return;
       }
       
       // Получение ID только что созданного пользователя
-      const userId = result.insertId;
+      const newUserId = result.insertId;
 
       // Вставка начальных ресурсов для нового пользователя
       const initialResources = [
-        { type: 'gold', amount: 100 },
-        { type: 'wood', amount: 0 },
-        { type: 'stone', amount: 0 },
-        { type: 'clay', amount: 0 }
+        { type: 'gold', amount: 100, update_rate: 1},
+        { type: 'wood', amount: 0, update_rate: 0},
+        { type: 'stone', amount: 0, update_rate: 0},
+        { type: 'clay', amount: 0, update_rate: 0}
       ];
 
       initialResources.forEach(resource => {
-        db.query(resourcesInsertQuery, [userId, resource.type, resource.amount], (err, result) => {
+        db.query(resourcesInsertQuery, [newUserId, resource.type, resource.amount, resource.update_rate], (err, result) => {
           if (err) {
             socket.emit('registerResponse', { success: false, message: 'Ошибка регистрации' });
             return;
@@ -76,7 +80,7 @@ io.on('connection', (socket) => {
   // Обработчик авторизации
   socket.on('login', (data) => {
     const { username, password } = data;
-
+    
     const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
     
     db.query(query, [username, password], (err, results) => {
@@ -86,6 +90,8 @@ io.on('connection', (socket) => {
       }
       if (results.length > 0) {
         const user = results[0];
+        userInQuestion = user.id;
+         
         // Получение ресурсов пользователя
         const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
         db.query(resourcesQuery, [user.id], (err, resourceResults) => {
@@ -101,63 +107,69 @@ io.on('connection', (socket) => {
             user: { 
               id: user.id,
             }
-          });
+          });         
         });
       } else {
         socket.emit('loginResponse', { success: false, message: 'Неверные имя пользователя или пароль' });
       }
     });
   });
+  
+  
+  socket.on('pageLoaded', (data) => {
+    const userId = data.userId;
+
+    socketUserMap[socket.id] = userId;
+    console.log(socketUserMap);
+  });
+  
 
   // Периодическое обновление ресурсов
-setInterval(async () => {
+setInterval(async () => {console.log(socket.id);
   // Получение всех пользователей
-  const usersQuery = 'SELECT id FROM users';
-  db.query(usersQuery, (err, users) => {
-    if (err) {
-      console.error('Ошибка получения пользователей:', err);
-      return;
-    }
-
-    users.forEach(user => {
-      // Получение ресурсов пользователя
-      const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
-      db.query(resourcesQuery, [user.id], (err, resources) => {
-        if (err) {
-          console.error('Ошибка получения ресурсов:', err);
-          return;
-        }
-
-        // Обновление ресурсов для данного пользователя на основе коэффициентов прироста
-        resources.forEach(resource => {
-          const updateResourcesQuery = 'UPDATE resources SET amount = amount + ? WHERE user_id = ? AND type = ?';
-
-          db.query(updateResourcesQuery, [resource.update_rate, user.id, resource.type], (err, result) => {
-            if (err) {
-              console.error(`Ошибка обновления ресурса ${resource.type} для пользователя ${user.id}:`, err);
-              return;
-            }
-          });
-        });
-      });
-    });
-
-    // Получение обновленных ресурсов для всех пользователей
-    const allResourcesQuery = 'SELECT * FROM resources';
-    db.query(allResourcesQuery, (err, allResources) => {
+  const onlineUserIds = Object.values(socketUserMap);
+  
+  onlineUserIds.forEach(userId => {
+    
+    // Получение ресурсов пользователя
+    const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
+    db.query(resourcesQuery, [userId], (err, resources) => {
       if (err) {
         console.error('Ошибка получения ресурсов:', err);
         return;
       }
-      
-      // Отправка обновленных ресурсов всем подключенным клиентам
-      io.emit('resourceUpdate', allResources);
+
+      // Обновление ресурсов для данного пользователя на основе коэффициентов прироста
+      resources.forEach(resource => {
+        const updateResourcesQuery = 'UPDATE resources SET amount = amount + ? WHERE user_id = ? AND type = ?';
+
+        db.query(updateResourcesQuery, [resource.update_rate, userId, resource.type], (err, result) => {
+          if (err) {
+            console.error(`Ошибка обновления ресурса ${resource.type} для пользователя ${user.id}:`, err);
+            return;
+          }
+        });
+      });
     });
+  });
+
+  // Получение обновленных ресурсов для всех пользователей
+  const allResourcesQuery = 'SELECT * FROM resources';
+  db.query(allResourcesQuery, (err, allResources) => {
+    if (err) {
+      console.error('Ошибка получения ресурсов:', err);
+      return;
+    }
+    
+    // Отправка обновленных ресурсов всем подключенным клиентам
+    io.emit('resourceUpdate', allResources);
   });
 }, 5000); // Обновление каждые 5 секунд
 
   socket.on('disconnect', () => {
     console.log('Клиент отключен');
+    // При отключении пользователя удаляем его из списка пользователей в сети
+    delete socketUserMap[socket.id];
   });
 });
 
