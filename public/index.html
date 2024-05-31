@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Economic Game</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <h1>Welcome to the Economic Game</h1>
+  <div id="register">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input type="text" id="registerUsername" placeholder="Username" required><br>
+      <input type="password" id="registerPassword" placeholder="Password" required><br>
+      <select id="registerLocation" required>
+        <option value="" disabled selected>Select Location</option>
+        <option value="1">Forest</option>
+        <option value="2">Mountains</option>
+        <option value="3">Plains</option>
+      </select><br>
+      <button type="submit">Register</button>
+    </form>
+    <p id="registerMessage"></p>
+  </div>
+
+  <div id="login">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="loginUsername" placeholder="Username" required><br>
+      <input type="password" id="loginPassword" placeholder="Password" required><br>
+      <button type="submit">Login</button>
+    </form>
+    <p id="loginMessage"></p>
+  </div>
+  
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
