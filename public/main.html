@@ -13,6 +13,16 @@
     <p id="stone">Stone: <span id="stoneAmount"></span></p>
     <p id="clay">Clay: <span id="clayAmount"></span></p>
   </div>
+  <button id="tradeBtn">Торговать</button>
+
+  <div id="tradeModal" class="modal">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>Активные пользователи</h2>
+      <div id="activeUsersList"></div> <!-- Контейнер для кнопок -->
+    </div>
+  </div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>
 </body>

@@ -42,6 +42,62 @@ button:hover {
   background-color: #0056b3;
 }
 
-p {
-  color: red;
+
+/* Стили для модального окна */
+.modal {
+  display: none; /* Скрыть модальное окно по умолчанию */
+  position: fixed; /* Оставаться на одном месте */
+  z-index: 1; 
+  right: 0;
+  top: 0;
+  width: 15%; /* Полная ширина */
+  height: 100%; /* Полная высота */
+  overflow: auto; /* Включить прокрутку, если это необходимо */
+  background-color: rgb(0,0,0); /* Цвет запасной копии */
+  background-color: rgba(0,0,0,0.4); /* Черный с непрозрачностью */
+}
+
+.modal-content {
+  background-color: #fefefe;
+  margin: 15% auto; /* 15% сверху и центрированно */
+  padding: 20px;
+  border: 1px solid #888;
+  width: 80%; /* Может быть больше или меньше, в зависимости от размера */
+}
+
+/* Стили для закрывающей кнопки */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: black;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+
+/* стили для кнопок */
+button.trade-user-button {
+  background-color: #0950AF; 
+  border: 1px solid #888;
+  color: white; /* Белый цвет текста */
+  padding: 5px 16px; /* Отступы */
+  text-align: left; 
+  text-decoration: none; /* Без подчеркивания */
+  display: block; /* Блочный элемент */
+  font-size: 12x; /* Размер шрифта */
+  margin: 0;
+  cursor: pointer; /* Курсор в виде указателя */
+  width: 100%;
+  
+}
+
+/* Стили при наведении на кнопку */
+button.trade-user-button:hover {
+  background-color: #238027;
 }
