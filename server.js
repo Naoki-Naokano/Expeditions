@@ -11,7 +11,7 @@ const io = socketIo(server);
 const db = mysql.createConnection({
   host: 'localhost',
   user: 'root',
-  password: 'admin', 
+  password: 'admin',
   database: 'game_db'
 });
 
@@ -51,16 +51,16 @@ io.on('connection', (socket) => {
         }
         return;
       }
-      
+
       // Получение ID только что созданного пользователя
       const newUserId = result.insertId;
 
       // Вставка начальных ресурсов для нового пользователя
       const initialResources = [
-        { type: 'gold', amount: 100, update_rate: 1},
-        { type: 'wood', amount: 0, update_rate: 0},
-        { type: 'stone', amount: 0, update_rate: 0},
-        { type: 'clay', amount: 0, update_rate: 0}
+        { type: 'gold', amount: 100, update_rate: 1 },
+        { type: 'wood', amount: 0, update_rate: 0 },
+        { type: 'stone', amount: 0, update_rate: 0 },
+        { type: 'clay', amount: 0, update_rate: 0 }
       ];
 
       initialResources.forEach(resource => {
@@ -80,9 +80,9 @@ io.on('connection', (socket) => {
   // Обработчик авторизации
   socket.on('login', (data) => {
     const { username, password } = data;
-    
+
     const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
-    
+
     db.query(query, [username, password], (err, results) => {
       if (err) {
         socket.emit('loginResponse', { success: false, message: 'Ошибка авторизации' });
@@ -91,7 +91,7 @@ io.on('connection', (socket) => {
       if (results.length > 0) {
         const user = results[0];
         userInQuestion = user.id;
-         
+
         // Получение ресурсов пользователя
         const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
         db.query(resourcesQuery, [user.id], (err, resourceResults) => {
@@ -104,33 +104,37 @@ io.on('connection', (socket) => {
           socket.emit('loginResponse', {
             success: true,
             message: 'Авторизация успешна',
-            user: { 
+            user: {
               id: user.id,
             }
-          });         
+          });
         });
       } else {
         socket.emit('loginResponse', { success: false, message: 'Неверные имя пользователя или пароль' });
       }
     });
   });
-  
-  
+
   socket.on('pageLoaded', (data) => {
     const userId = data.userId;
 
     socketUserMap[socket.id] = userId;
     console.log(socketUserMap);
   });
-  
 
-  // Периодическое обновление ресурсов
-setInterval(async () => {console.log(socket.id);
+  socket.on('disconnect', () => {
+    console.log('Клиент отключен');
+    // При отключении пользователя удаляем его из списка пользователей в сети
+    delete socketUserMap[socket.id];
+  });
+});
+
+// Периодическое обновление ресурсов
+setInterval(() => {
   // Получение всех пользователей
   const onlineUserIds = Object.values(socketUserMap);
-  
+
   onlineUserIds.forEach(userId => {
-    
     // Получение ресурсов пользователя
     const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
     db.query(resourcesQuery, [userId], (err, resources) => {
@@ -145,7 +149,7 @@ setInterval(async () => {console.log(socket.id);
 
         db.query(updateResourcesQuery, [resource.update_rate, userId, resource.type], (err, result) => {
           if (err) {
-            console.error(`Ошибка обновления ресурса ${resource.type} для пользователя ${user.id}:`, err);
+            console.error(`Ошибка обновления ресурса ${resource.type} для пользователя ${userId}:`, err);
             return;
           }
         });
@@ -160,18 +164,11 @@ setInterval(async () => {console.log(socket.id);
       console.error('Ошибка получения ресурсов:', err);
       return;
     }
-    
+
     // Отправка обновленных ресурсов всем подключенным клиентам
     io.emit('resourceUpdate', allResources);
   });
 }, 5000); // Обновление каждые 5 секунд
-
-  socket.on('disconnect', () => {
-    console.log('Клиент отключен');
-    // При отключении пользователя удаляем его из списка пользователей в сети
-    delete socketUserMap[socket.id];
-  });
-});
 
 // Функция для получения количества ресурсов из результатов запроса
 function getResourceAmount(results, type) {
