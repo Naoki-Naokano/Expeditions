@@ -141,6 +141,11 @@ io.on('connection', (socket) => {
   };
 });
 
+  socket.on('confirmTrade', (data) => {
+    const sale = data.sale;
+    console.log(data);
+  });
+
 
   socket.on('disconnect', () => {
     console.log('Клиент отключен');

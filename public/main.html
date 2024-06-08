@@ -5,23 +5,52 @@
   <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-  <h1>Welcome to Main Page</h1>
+  <h1>Добро пожаловать в Expedition</h1>
   <div id="resources">
-    <h2>Resources</h2>
-    <p id="gold">Gold: <span id="goldAmount"></span></p>
-    <p id="wood">Wood: <span id="woodAmount"></span></p>
-    <p id="stone">Stone: <span id="stoneAmount"></span></p>
-    <p id="clay">Clay: <span id="clayAmount"></span></p>
+    <h2>Ресурсы</h2>
+    <p id="gold">Золото: <span id="goldAmount"></span></p>
+    <p id="wood">Дерево: <span id="woodAmount"></span></p>
+    <p id="stone">Камень: <span id="stoneAmount"></span></p>
+    <p id="clay">Глина: <span id="clayAmount"></span></p>
   </div>
   <button id="tradeBtn">Торговать</button>
 
   <div id="tradeModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content users-modal-content">
       <span class="close">&times;</span>
       <h2>Активные пользователи</h2>
       <div id="activeUsersList"></div> <!-- Контейнер для кнопок -->
     </div>
   </div>
+
+<div id="tradeWindow" class="modal1">
+    <div class="modal-content trade-modal-content">
+      <span class="close">&times;</span>
+      <h2>Торговля с пользователем <span id="selectedUser"></span></h2>
+      <div class="trade-row">
+        <label for="sale">Продажа</label>
+        <select id="sale">
+          <option value="gold">Золото</option>
+          <option value="wood">Дерево</option>
+          <option value="stone">Камень</option>
+          <option value="clay">Глина</option>
+        </select>
+        <input type="number" id="sale_quantity" min="1" value="1">
+      </div>
+      <div class="trade-row">
+        <label for="purchase">Покупка</label>
+        <select id="purchase">
+          <option value="wood">Дерево</option>
+          <option value="stone">Камень</option>
+          <option value="clay">Глина</option>
+          <option value="gold">Золото</option>
+        </select>
+        <input type="number" id="purchase_quantity" min="1" value="1">
+      </div>
+      <button id="confirmTrade">Подтвердить сделку</button>
+    </div>
+  </div>
+
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>

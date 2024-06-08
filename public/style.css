@@ -42,7 +42,6 @@ button:hover {
   background-color: #0056b3;
 }
 
-
 /* Стили для модального окна */
 .modal {
   display: none; /* Скрыть модальное окно по умолчанию */
@@ -60,10 +59,12 @@ button:hover {
 .modal-content {
   background-color: #fefefe;
   margin: 15% auto; /* 15% сверху и центрированно */
-  padding: 20px;
+  padding: 10px;
   border: 1px solid #888;
-  width: 80%; /* Может быть больше или меньше, в зависимости от размера */
 }
+
+.users-modal-content{width: 80%;}
+.trade-modal-content{width: 30%;}
 
 /* Стили для закрывающей кнопки */
 .close {
@@ -80,7 +81,6 @@ button:hover {
   cursor: pointer;
 }
 
-
 /* стили для кнопок */
 button.trade-user-button {
   background-color: #0950AF; 
@@ -94,10 +94,45 @@ button.trade-user-button {
   margin: 0;
   cursor: pointer; /* Курсор в виде указателя */
   width: 100%;
-  
 }
 
 /* Стили при наведении на кнопку */
 button.trade-user-button:hover {
   background-color: #238027;
+}
+
+.modal1 {
+  display: none; /* Скрыть по умолчанию */
+  position: fixed; /* Оставить модальное окно видимым (фиксированное положение) */
+  z-index: 1; /* Сидеть на вершине */
+  left: 0;
+  top: 0;
+  width: 100%; /* Полная ширина */
+  height: 100%; /* Полная высота */
+  overflow: auto; /* Включить прокрутку при необходимости */
+  background-color: rgb(0,0,0); /* Цвет заднего фона */
+  background-color: rgba(0,0,0,0.4); /* Чёрный с непрозрачностью */
+}
+
+/* Новые стили для расположения элементов */
+.trade-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.trade-row label {
+  margin-right: 10px;
+}
+
+.trade-row select {
+  width: auto;
+  padding: 5px;
+  margin-right: 10px;
+}
+
+.trade-row input[type="number"] {
+  width: 60px;
+  padding: 5px;
 }

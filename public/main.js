@@ -23,23 +23,31 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Обработка кнопки "торговать"
-  const modal = document.getElementById('tradeModal');
-  const btn = document.getElementById('tradeBtn');
-  const span = document.getElementsByClassName('close')[0];
+  const tradeModal = document.getElementById('tradeModal');
+  const tradeWindow = document.getElementById('tradeWindow');
+  const tradeBtn = document.getElementById('tradeBtn');
+  const tradeModalClose = tradeModal.querySelector('.close');
+  const tradeWindowClose = tradeWindow.querySelector('.close');
 
-  btn.onclick = function() {
-    modal.style.display = 'block';
+  tradeBtn.onclick = function() {
+    tradeModal.style.display = 'block';
     // Запросить список активных пользователей
     socket.emit('getActiveUsers', { userId: currentUser.id });
   }
 
-  span.onclick = function() {
-    modal.style.display = 'none';
+  tradeModalClose.onclick = function() {
+    tradeModal.style.display = 'none';
+  }
+
+  tradeWindowClose.onclick = function() {
+    tradeWindow.style.display = 'none';
   }
 
   window.onclick = function(event) {
-    if (event.target == modal) {
-      modal.style.display = 'none';
+    if (event.target == tradeModal) {
+      tradeModal.style.display = 'none';
+    } else if (event.target == tradeWindow) {
+      tradeWindow.style.display = 'none';
     }
   }
 
@@ -54,10 +62,25 @@ document.addEventListener('DOMContentLoaded', function() {
       button.onclick = () => {
         // Логика выбора пользователя для торговли
         console.log(`Вы выбрали пользователя ${user.username}`);
-        modal.style.display = 'none';
-        // Добавьте здесь логику для начала торговли с выбранным пользователем
+        tradeModal.style.display = 'none';
+        tradeWindow.style.display = 'block';
+        document.getElementById('selectedUser').innerText = user.username;
       };
       activeUsersList.appendChild(button);
     });
   });
+  
+  // Обработка события подтверждения сделки
+  document.getElementById('confirmTrade').addEventListener('click', () => {
+    const sale = document.getElementById('sale').value;
+    const sale_qunatity = document.getElementById('sale_quantity').value;
+    const purchase = document.getElementById('purchase').value;
+    const purchase_qunatity = document.getElementById('purchase_quantity').value;
+    const selectedUser = document.getElementById('selectedUser').innerText;
+    
+    // Отправить данные на сервер для обработки сделки
+    socket.emit('confirmTrade', {sale, sale_qunatity, purchase, purchase_qunatity, selectedUser});
+    tradeWindow.style.display = 'none';
+  });
+
 });
