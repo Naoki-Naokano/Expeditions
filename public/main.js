@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Получаем данные пользователя из localStorage
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  
 
   socket.emit('pageLoaded', { userId: currentUser.id });
 
@@ -58,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
     users.forEach(user => {
       const button = document.createElement('button');
       button.className = 'trade-user-button'; // Добавляем класс к кнопке
-      button.innerText = user.username;
+      button.innerText = `${user.username} | ${user.location}`;
       button.onclick = () => {
         // Логика выбора пользователя для торговли
         console.log(`Вы выбрали пользователя ${user.username}`);
@@ -81,6 +82,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Отправить данные на сервер для обработки сделки
     socket.emit('confirmTrade', {sale, sale_qunatity, purchase, purchase_qunatity, selectedUser});
     tradeWindow.style.display = 'none';
+  });
+  
+  socket.on('tradeOffer', (data) => {
+    if (data.user == currentUser.name) {
+      console.log("Вам запрос торговли!");
+      console.log(data.data);
+    };
   });
 
 });

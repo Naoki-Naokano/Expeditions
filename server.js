@@ -90,7 +90,6 @@ io.on('connection', (socket) => {
       }
       if (results.length > 0) {
         const user = results[0];
-        userInQuestion = user.id;
 
         // Получение ресурсов пользователя
         const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
@@ -106,6 +105,7 @@ io.on('connection', (socket) => {
             message: 'Авторизация успешна',
             user: {
               id: user.id,
+              name: user.username,
             }
           });
         });
@@ -142,8 +142,9 @@ io.on('connection', (socket) => {
 });
 
   socket.on('confirmTrade', (data) => {
-    const sale = data.sale;
-    console.log(data);
+    const user = data.selectedUser;
+    console.log(user);
+    io.emit('tradeOffer', {user, data});
   });
 
 
