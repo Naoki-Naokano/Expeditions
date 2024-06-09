@@ -143,10 +143,113 @@ io.on('connection', (socket) => {
 
   socket.on('confirmTrade', (data) => {
     const user = data.selectedUser;
-    console.log(user);
     io.emit('tradeOffer', {user, data});
   });
+  
+  socket.on('tradeAccept', (tradeData) => {
+  const { sale, sale_quantity, purchase, purchase_quantity, selectedUser, requesterName } = tradeData;
+  console.log(tradeData);
+  // Получаем user_id для обоих пользователей
+  const getUsersQuery = 'SELECT id, username FROM users WHERE username IN (?, ?)';
+  db.query(getUsersQuery, [requesterName, selectedUser], (err, results) => {
+    if (err) {
+      console.error('Error fetching user IDs:', err);
+      return;
+    }
 
+    const requester = results.find(user => user.username === requesterName);
+    const recipient = results.find(user => user.username === selectedUser);
+
+    if (!requester || !recipient) {
+      console.error('User not found');
+      return;
+    }
+
+    // Обновляем ресурсы
+db.beginTransaction(err => {
+  if (err) throw err;
+
+  const updateResourceQuery = `
+    UPDATE resources 
+    SET amount = CASE 
+      WHEN user_id = ? AND type = ? THEN amount - ?
+      WHEN user_id = ? AND type = ? THEN amount + ?
+      WHEN user_id = ? AND type = ? THEN amount - ?
+      WHEN user_id = ? AND type = ? THEN amount + ?
+    END
+    WHERE 
+      (user_id = ? AND type = ?) OR 
+      (user_id = ? AND type = ?) OR 
+      (user_id = ? AND type = ?) OR 
+      (user_id = ? AND type = ?)
+  `;
+
+  db.query(updateResourceQuery, [
+    requester.id, sale, sale_quantity,          // Отнять у requester sale_quantity type sale
+    recipient.id, sale, sale_quantity,          // Добавить recipient sale_quantity type sale
+    recipient.id, purchase, purchase_quantity,  // Добавить recipient purchase_quantity type purchase
+    requester.id, purchase, purchase_quantity,  // Отнять у requester purchase_quantity type purchase
+
+    // Условия WHERE
+    requester.id, sale,
+    recipient.id, sale,
+    recipient.id, purchase,
+    requester.id, purchase
+  ], (err, result) => {
+    if (err) {
+      return db.rollback(() => {
+        console.error('Error updating resources:', err);
+      });
+    }
+
+    // Выполнить новый запрос для проверки значений полей
+    const checkFieldsQuery = `
+      SELECT amount 
+      FROM resources 
+      WHERE (user_id = ? AND type = ?) OR (user_id = ? AND type = ?)
+    `;
+
+    db.query(checkFieldsQuery, [
+      requester.id, sale,
+      recipient.id, sale,
+      recipient.id, purchase,
+      requester.id, purchase
+    ], (err, rows) => {
+      if (err) {
+        return db.rollback(() => {
+          console.error('Error checking resource amounts:', err);
+        });
+      }
+
+      let abortTransaction = false;
+      for (let row of rows) {
+        if (row.amount < 0) {
+          abortTransaction = true;
+          break;
+        }
+      }
+
+      if (abortTransaction) {
+        return db.rollback(() => {
+          console.error('Transaction aborted: one of the amounts is less than 0.');
+        });
+      }
+
+      db.commit(err => {
+        if (err) {
+          return db.rollback(() => {
+            console.error('Error committing transaction:', err);
+          });
+        }
+        console.log('Transaction Completed Successfully.');
+      });
+    });
+  });
+});
+
+
+  });
+});
 
   socket.on('disconnect', () => {
     console.log('Клиент отключен');

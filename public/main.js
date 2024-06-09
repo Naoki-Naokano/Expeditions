@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Получаем данные пользователя из localStorage
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+  let currentTradeOffer = null;  // Переменная для хранения текущего предложения
   
-
   socket.emit('pageLoaded', { userId: currentUser.id });
 
   // Обрабатываем обновления ресурсов
@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', function() {
       button.innerText = `${user.username} | ${user.location}`;
       button.onclick = () => {
         // Логика выбора пользователя для торговли
-        console.log(`Вы выбрали пользователя ${user.username}`);
         tradeModal.style.display = 'none';
         tradeWindow.style.display = 'block';
         document.getElementById('selectedUser').innerText = user.username;
@@ -74,21 +73,57 @@ document.addEventListener('DOMContentLoaded', function() {
   // Обработка события подтверждения сделки
   document.getElementById('confirmTrade').addEventListener('click', () => {
     const sale = document.getElementById('sale').value;
-    const sale_qunatity = document.getElementById('sale_quantity').value;
+    const sale_quantity = document.getElementById('sale_quantity').value;
     const purchase = document.getElementById('purchase').value;
-    const purchase_qunatity = document.getElementById('purchase_quantity').value;
+    const purchase_quantity = document.getElementById('purchase_quantity').value;
     const selectedUser = document.getElementById('selectedUser').innerText;
+    const requesterName = currentUser.name;
     
     // Отправить данные на сервер для обработки сделки
-    socket.emit('confirmTrade', {sale, sale_qunatity, purchase, purchase_qunatity, selectedUser});
+    socket.emit('confirmTrade', {sale, sale_quantity, purchase, purchase_quantity, selectedUser, requesterName});
     tradeWindow.style.display = 'none';
   });
   
+  // Обработка полученного торгового предложения
   socket.on('tradeOffer', (data) => {
-    if (data.user == currentUser.name) {
-      console.log("Вам запрос торговли!");
+    if (data.user === currentUser.name) {
       console.log(data.data);
+      currentTradeOffer = data.data; // Сохранение текущего предложения
+      
+      tradeOfferDetails.innerText = `Запрос от ${data.data.requesterName}:
+      Продать: ${data.data.purchase_quantity} ${data.data.purchase} за ${data.data.sale_quantity} ${data.data.sale}`;
+
+      // Покажите модальное окно
+      tradeOfferModal.style.display = 'block';
     };
   });
 
+  // Закрытие модального окна
+  document.querySelectorAll('.close').forEach(span => {
+    span.onclick = function() {
+      tradeModal.style.display = 'none';
+      tradeWindow.style.display = 'none';
+      tradeOfferModal.style.display = 'none';
+    }
+  });
+
+  document.getElementById('acceptTrade').addEventListener('click', () => {
+    // Логика принятия торгового предложения
+    if (currentTradeOffer) {
+      const { sale, sale_quantity, purchase, purchase_quantity, selectedUser, requesterName } = currentTradeOffer;
+      socket.emit('tradeAccept', { sale, sale_quantity, purchase, purchase_quantity, selectedUser, requesterName });
+      tradeOfferModal.style.display = 'none';
+    }
+  });
+
+  document.getElementById('rejectTrade').addEventListener('click', () => {
+    // Логика отклонения торгового предложения
+    tradeOfferModal.style.display = 'none';
+  });
+
+  window.onclick = function(event) {
+    if (event.target === tradeOfferModal) {
+      tradeOfferModal.style.display = 'none';
+    }
+  };
 });

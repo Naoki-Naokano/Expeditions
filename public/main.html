@@ -24,33 +24,42 @@
   </div>
 
 <div id="tradeWindow" class="modal1">
-    <div class="modal-content trade-modal-content">
-      <span class="close">&times;</span>
-      <h2>Торговля с пользователем <span id="selectedUser"></span></h2>
-      <div class="trade-row">
-        <label for="sale">Продажа</label>
-        <select id="sale">
-          <option value="gold">Золото</option>
-          <option value="wood">Дерево</option>
-          <option value="stone">Камень</option>
-          <option value="clay">Глина</option>
-        </select>
-        <input type="number" id="sale_quantity" min="1" value="1">
-      </div>
-      <div class="trade-row">
-        <label for="purchase">Покупка</label>
-        <select id="purchase">
-          <option value="wood">Дерево</option>
-          <option value="stone">Камень</option>
-          <option value="clay">Глина</option>
-          <option value="gold">Золото</option>
-        </select>
-        <input type="number" id="purchase_quantity" min="1" value="1">
-      </div>
-      <button id="confirmTrade">Подтвердить сделку</button>
+  <div class="modal-content trade-modal-content">
+    <span class="close">&times;</span>
+    <h2>Торговля с пользователем <span id="selectedUser"></span></h2>
+    <div class="trade-row">
+      <label for="purchase">Покупка</label>
+      <select id="purchase">
+        <option value="wood">Дерево</option>
+        <option value="stone">Камень</option>
+        <option value="clay">Глина</option>
+        <option value="gold">Золото</option>
+      </select>
+      <input type="number" id="purchase_quantity" min="1" value="1" class="input_quantity">
     </div>
+    <div class="trade-row">
+      <label for="sale">Продажа</label>
+      <select id="sale">
+        <option value="gold">Золото</option>
+        <option value="wood">Дерево</option>
+        <option value="stone">Камень</option>
+        <option value="clay">Глина</option>
+      </select>
+      <input type="number" id="sale_quantity" min="1" value="1" class="input_quantity">
+    </div>
+    <button id="confirmTrade">Подтвердить сделку</button>
   </div>
+</div>
 
+<div id="tradeOfferModal" class="modal-bottom-right">
+  <div class="modal-content trade-offer-modal-content">
+    <span class="close">&times;</span>
+    <h3>Запрос на торговлю</h3>
+    <p id="tradeOfferDetails"></p>
+    <button id="acceptTrade">Принять</button>
+    <button id="rejectTrade">Отклонить</button>
+  </div>
+</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="main.js"></script>
