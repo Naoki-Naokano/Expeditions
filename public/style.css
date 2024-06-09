@@ -4,6 +4,40 @@ body {
   background-color: #f0f0f0;
 }
 
+.auxD {
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin: 20px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  text-align: center;
+  vertical-align: top;
+  height: 200px;
+  overflow-y: auto;
+}
+
+.panel-btn {
+  align-self: center;
+  margin-top: auto; /* Чтобы кнопка была внизу */
+}
+
+.resource {
+  margin: 5px;
+  text-align: left;
+}
+
+.panel-header {
+  margin-top: 0
+}
+
 h1, h2 {
   color: #333;
 }
@@ -27,7 +61,6 @@ select {
   width: auto;
   padding: 10px;
   border: 1px solid #ccc;
-
 }
 
 .input_quantity {
