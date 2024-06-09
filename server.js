@@ -166,88 +166,194 @@ io.on('connection', (socket) => {
     }
 
     // Обновляем ресурсы
-db.beginTransaction(err => {
-  if (err) throw err;
+    db.beginTransaction(err => {
+      if (err) throw err;
 
-  const updateResourceQuery = `
-    UPDATE resources 
-    SET amount = CASE 
-      WHEN user_id = ? AND type = ? THEN amount - ?
-      WHEN user_id = ? AND type = ? THEN amount + ?
-      WHEN user_id = ? AND type = ? THEN amount - ?
-      WHEN user_id = ? AND type = ? THEN amount + ?
-    END
-    WHERE 
-      (user_id = ? AND type = ?) OR 
-      (user_id = ? AND type = ?) OR 
-      (user_id = ? AND type = ?) OR 
-      (user_id = ? AND type = ?)
-  `;
+      const updateResourceQuery = `
+        UPDATE resources 
+        SET amount = CASE 
+          WHEN user_id = ? AND type = ? THEN amount - ?
+          WHEN user_id = ? AND type = ? THEN amount + ?
+          WHEN user_id = ? AND type = ? THEN amount - ?
+          WHEN user_id = ? AND type = ? THEN amount + ?
+        END
+        WHERE 
+          (user_id = ? AND type = ?) OR 
+          (user_id = ? AND type = ?) OR 
+          (user_id = ? AND type = ?) OR 
+          (user_id = ? AND type = ?)
+      `;
 
-  db.query(updateResourceQuery, [
-    requester.id, sale, sale_quantity,          // Отнять у requester sale_quantity type sale
-    recipient.id, sale, sale_quantity,          // Добавить recipient sale_quantity type sale
-    recipient.id, purchase, purchase_quantity,  // Добавить recipient purchase_quantity type purchase
-    requester.id, purchase, purchase_quantity,  // Отнять у requester purchase_quantity type purchase
+      db.query(updateResourceQuery, [
+        requester.id, sale, sale_quantity,          // Отнять у requester sale_quantity type sale
+        recipient.id, sale, sale_quantity,          // Добавить recipient sale_quantity type sale
+        recipient.id, purchase, purchase_quantity,  // Добавить recipient purchase_quantity type purchase
+        requester.id, purchase, purchase_quantity,  // Отнять у requester purchase_quantity type purchase
 
-    // Условия WHERE
-    requester.id, sale,
-    recipient.id, sale,
-    recipient.id, purchase,
-    requester.id, purchase
-  ], (err, result) => {
-    if (err) {
-      return db.rollback(() => {
-        console.error('Error updating resources:', err);
-      });
-    }
-
-    // Выполнить новый запрос для проверки значений полей
-    const checkFieldsQuery = `
-      SELECT amount 
-      FROM resources 
-      WHERE (user_id = ? AND type = ?) OR (user_id = ? AND type = ?) OR (user_id = ? AND type = ?) OR (user_id = ? AND type = ?)
-    `;
-
-    db.query(checkFieldsQuery, [
-      requester.id, sale,
-      recipient.id, sale,
-      recipient.id, purchase,
-      requester.id, purchase
-    ], (err, rows) => {
-      if (err) {
-        return db.rollback(() => {
-          console.error('Error checking resource amounts:', err);
-        });
-      }
-
-      let abortTransaction = false;
-      for (let row of rows) {
-        if (row.amount < 0) {
-          abortTransaction = true;
-          break;
-        }
-      }
-
-      if (abortTransaction) {
-        return db.rollback(() => {
-          console.error('Transaction aborted: one of the amounts is less than 0.');
-        });
-      }
-
-      db.commit(err => {
+        // Условия WHERE
+        requester.id, sale,
+        recipient.id, sale,
+        recipient.id, purchase,
+        requester.id, purchase
+      ], (err, result) => {
         if (err) {
           return db.rollback(() => {
-            console.error('Error committing transaction:', err);
+            console.error('Error updating resources:', err);
           });
         }
-        console.log('Transaction Completed Successfully.');
+
+        // Выполнить новый запрос для проверки значений полей
+        const checkFieldsQuery = `
+          SELECT amount 
+          FROM resources 
+          WHERE (user_id = ? AND type = ?) OR (user_id = ? AND type = ?) OR (user_id = ? AND type = ?) OR (user_id = ? AND type = ?)
+        `;
+
+        db.query(checkFieldsQuery, [
+          requester.id, sale,
+          recipient.id, sale,
+          recipient.id, purchase,
+          requester.id, purchase
+        ], (err, rows) => {
+          if (err) {
+            return db.rollback(() => {
+              console.error('Error checking resource amounts:', err);
+            });
+          }
+
+          let abortTransaction = false;
+          for (let row of rows) {
+            if (row.amount < 0) {
+              abortTransaction = true;
+              break;
+            }
+          }
+
+          if (abortTransaction) {
+            return db.rollback(() => {
+              console.error('Transaction aborted: one of the amounts is less than 0.');
+            });
+          }
+
+          db.commit(err => {
+            if (err) {
+              return db.rollback(() => {
+                console.error('Error committing transaction:', err);
+              });
+            }
+            console.log('Transaction Completed Successfully.');
+          });
+        });
       });
     });
+    ``
   });
 });
-``
 
+  // Обработка события 'sendExpedition'
+socket.on('sendExpedition', (data) => {
+  const {selectedUser} = data;
+
+  db.beginTransaction((err) => {
+
+    // Запрос для получения user_id по username
+    const getUserIdQuery = 'SELECT id FROM users WHERE username = ?';
+    
+    db.query(getUserIdQuery, [selectedUser], (err, results) => {
+      if (err) {
+        return db.rollback(() => {
+          console.error('Ошибка выполнения запроса для получения user_id:', err);
+        });
+      }
+
+      if (results.length === 0) {
+        return db.rollback(() => {
+          console.error('Пользователь не найден');
+        });
+      }
+
+      const userId = results[0].id;
+
+      // Запрос для обновления ресурсов пользователя
+      const updateResourcesQuery = `
+        UPDATE resources
+        SET amount = CASE 
+          WHEN type = 'gold' THEN amount - ?
+          WHEN type = 'wood' THEN amount - ?
+          WHEN type = 'stone' THEN amount - ?
+          WHEN type = 'clay' THEN amount - ?
+        END
+        WHERE user_id = ? AND type IN ('gold', 'wood', 'stone', 'clay')
+      `;
+
+      db.query(updateResourcesQuery, [100, 20, 20, 20, userId], (err, result) => {
+        if (err) {
+          return db.rollback(() => {
+            console.error('Ошибка обновления ресурсов:', err);
+          });
+        }
+
+        db.commit((err) => {
+          if (err) {
+            return db.rollback(() => {
+              console.error('Ошибка фиксации транзакции:', err);
+            });
+          }
+
+          console.log('Транзакция успешно завершена.');
+        });
+      });
+    
+  
+      const creatureId = getRandomInt(1, 18);
+ //////////////////////////////////////////
+ const query = 'SELECT * FROM creature_list WHERE id = ?';
+  
+  db.query(query, [creatureId], (err, results) => {
+    if (err) {
+      console.error('Ошибка выполнения запроса:', err);
+      return;
+    }
+    // Проверка наличия результатов
+    if (results.length > 0) {
+      console.log('Данные существа:', results[0]);
+    } else {
+      console.log('Существо с указанным id не найдено.');
+    }
+  });
+ ////////////////////////////////////////////////////// 
+  
+    
+      const selectQuery = 'SELECT * FROM creatures WHERE user_id = ? AND creature_id = ?';
+      db.query(selectQuery, [userId, creatureId], (err, results) => {
+        if (err) {
+          console.error('Ошибка выполнения запроса SELECT:', err);
+          return;
+        }
+        
+        if (results.length > 0) {
+          // Если запись уже существует, увеличиваем amount на 1
+          const updateQuery = 'UPDATE creatures SET amount = amount + 1 WHERE user_id = ? AND creature_id = ?';
+          db.query(updateQuery, [userId, creatureId], (err, result) => {
+            if (err) {
+              console.error('Ошибка выполнения запроса UPDATE:', err);
+              return;
+            }
+            console.log('Запись обновлена.');
+          });
+        } else {
+          // Если запись не существует, создаем новую запись
+          const insertQuery = 'INSERT INTO creatures (user_id, creature_id, amount) VALUES (?, ?, 1)';
+          db.query(insertQuery, [userId, creatureId], (err, result) => {
+            if (err) {
+              console.error('Ошибка выполнения запроса INSERT:', err);
+              return;
+            }
+            console.log('Новая запись добавлена.');
+          });
+        }
+      });
+    });
   });
 });
 
@@ -309,3 +415,8 @@ function getResourceAmount(results, type) {
 server.listen(3000, () => {
   console.log('Сервер запущен на порту 3000');
 });
+
+function getRandomInt(min, max) {
+  // Получить случайное число в диапазоне от min до max включительно
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}

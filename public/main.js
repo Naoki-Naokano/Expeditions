@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const userResources = allResources.filter(resource => resource.user_id === currentUser.id);
     userResources.forEach(resource => {
       if (resource.type === 'gold') {
-        document.getElementById('goldAmount').innerText = resource.amount;
-        document.getElementById('goldAmountExp').innerText = resource.amount;
+        document.getElementById('goldAmount').innerText = Math.round(resource.amount);
+        document.getElementById('goldAmountExp').innerText = Math.round(resource.amount);
         if (resource.amount >= 100){
           goldAmountExp.classList.add('green');
           goldAmountExp.classList.remove('red');
@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', function() {
           goldAmountExp.classList.remove('green');
         }
       } else if (resource.type === 'wood') {
-        document.getElementById('woodAmount').innerText = resource.amount;
-        document.getElementById('woodAmountExp').innerText = resource.amount;
+        document.getElementById('woodAmount').innerText = Math.round(resource.amount);
+        document.getElementById('woodAmountExp').innerText = Math.round(resource.amount);
         if (resource.amount >= 20){
           woodAmountExp.classList.add('green');
           woodAmountExp.classList.remove('red');
@@ -32,8 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
           woodAmountExp.classList.remove('green');
         }
       } else if (resource.type === 'stone') {
-        document.getElementById('stoneAmount').innerText = resource.amount;
-        document.getElementById('stoneAmountExp').innerText = resource.amount;
+        document.getElementById('stoneAmount').innerText = Math.round(resource.amount);
+        document.getElementById('stoneAmountExp').innerText = Math.round(resource.amount);
         if (resource.amount >= 20){
           stoneAmountExp.classList.add('green');
           stoneAmountExp.classList.remove('red');
@@ -42,8 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
           stoneAmountExp.classList.remove('green');
         }
       } else if (resource.type === 'clay') {
-        document.getElementById('clayAmount').innerText = resource.amount;
-        document.getElementById('clayAmountExp').innerText = resource.amount;
+        document.getElementById('clayAmount').innerText = Math.round(resource.amount);
+        document.getElementById('clayAmountExp').innerText = Math.round(resource.amount);
         if (resource.amount >= 20){
           clayAmountExp.classList.add('green');
           clayAmountExp.classList.remove('red');
@@ -138,8 +138,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const woodAmount = document.getElementById('woodAmount').innerText;
     const stoneAmount = document.getElementById('stoneAmount').innerText;
     const clayAmount = document.getElementById('clayAmount').innerText;
+    const selectedUser = currentUser.name;
     if (goldAmount>=100 && woodAmount>=20 && stoneAmount>=20 && clayAmount>=20){
-      socket.emit('sendExpedtion', {goldAmount, woodAmount, stoneAmount, clayAmount});
+      socket.emit('sendExpedition', {selectedUser});
       expeditionModal.style.display = 'none';
     }
   });
