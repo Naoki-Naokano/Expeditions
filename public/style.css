@@ -235,3 +235,23 @@ button.trade-user-button:hover {
 .green {
   color: green;
 }
+
+.common {
+  color: grey;
+}
+
+.uncommon {
+  color: #7cbf8e;
+}
+
+.rare {
+  color: #6bb1d1;
+}
+
+.mythic {
+  color: #dba2da;
+}
+
+.legendary {
+  color: #e8c574;
+}

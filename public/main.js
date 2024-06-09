@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', function() {
   let currentTradeOffer = null;  // Переменная для хранения текущего предложения
   
   socket.emit('pageLoaded', { userId: currentUser.id });
+  socket.emit('requestCreatures', {userId: currentUser.id});
+  socket.on('preRequestCreatures', () => {
+    socket.emit('requestCreatures', {userId: currentUser.id});
+  });
 
   // Обрабатываем обновления ресурсов
   socket.on('resourceUpdate', (allResources) => {
@@ -174,4 +178,40 @@ document.addEventListener('DOMContentLoaded', function() {
       tradeOfferModal.style.display = 'none';
     }
   };
+  
+  socket.on('getCreature', (data) => {
+    
+    const creatureListDiv = document.getElementById('creatureList');
+    creatureListDiv.innerHTML = '';
+    data.forEach((creature) => {
+      const { name, rarity, amount } = creature;
+
+      // Создаем элемент <p> для отображения имени и редкости существа
+      const creatureElement = document.createElement('p');
+      creatureElement.textContent = `${name} (${amount}), ${rarity}`;
+      creatureElement.classList.add('resource');
+      switch (rarity) {
+        case "common":
+          creatureElement.classList.add('common');
+          break;
+        case "uncommon":
+          creatureElement.classList.add('uncommon');
+          break;
+        case "rare":
+          creatureElement.classList.add('rare');
+          break;
+        case "mythic":
+          creatureElement.classList.add('mythic');
+          break;
+        case "legendary":
+          creatureElement.classList.add('legendary');
+          break;
+        default:
+          // В случае, если редкость не соответствует ни одному из вариантов, не добавляем никакой класс
+          break;
+      }
+      // Добавляем элемент <p> с информацией о существе в <div id="creatureList">
+      creatureListDiv.appendChild(creatureElement);
+    });
+  });
 });

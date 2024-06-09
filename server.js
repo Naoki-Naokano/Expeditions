@@ -73,7 +73,7 @@ io.on('connection', (socket) => {
       });
 
       // Отправка ответа о успешной регистрации
-      socket.emit('registerResponse', { success: true, message: 'Регистрация успешна' });
+      //socket.emit('registerResponse', { success: true, message: 'Регистрация успешна' });
     });
   });
 
@@ -355,6 +355,55 @@ socket.on('sendExpedition', (data) => {
       });
     });
   });
+  socket.emit('preRequestCreatures');
+});
+
+socket.on('requestCreatures', (data) => {
+    
+    const userId = data.userId;
+  // Запрос для получения всех записей creatures для заданного userId
+  const getCreaturesQuery = 'SELECT creature_id, amount FROM creatures WHERE user_id = ?';
+
+  db.query(getCreaturesQuery, [userId], (err, creatures) => {
+    if (err) {
+      console.error('Ошибка выполнения запроса для получения creatures:', err);
+      return;
+    }
+    if (creatures.length > 0) {
+    // Переменная для хранения идентификаторов существ
+    let creatureIds = creatures.map(creature => creature.creature_id);
+    // Запрос для получения name и rarity для каждого creature_id из таблицы creature_list
+    const getCreatureDetailsQuery = 'SELECT id, name, rarity FROM creature_list WHERE id IN (?)';
+
+    db.query(getCreatureDetailsQuery, [creatureIds], (err, creatureDetails) => {
+      if (err) {
+        console.error('Ошибка выполнения запроса для получения деталей существ:', err);
+        return;
+      }
+
+      // Создаем объект для хранения данных о существах { amount, name, rarity }
+      let creatureData = [];
+
+      // Для каждой записи creatures
+      creatures.forEach(creature => {
+        // Находим соответствующие данные о существе из creatureDetails
+        let details = creatureDetails.find(detail => detail.id === creature.creature_id);
+
+        // Если данные о существе найдены
+        if (details) {
+          // Добавляем данные в объект creatureData
+          creatureData.push({
+            amount: creature.amount,
+            name: details.name,
+            rarity: details.rarity
+          });
+        }
+      });
+      // Отправляем данные через сокет
+      socket.emit('getCreature', creatureData);
+    });
+    }
+  });    
 });
 
   socket.on('disconnect', () => {
@@ -366,10 +415,13 @@ socket.on('sendExpedition', (data) => {
 
 // Периодическое обновление ресурсов
 setInterval(() => {
+  io.emit('preRequestCreatures');
   // Получение всех пользователей
   const onlineUserIds = Object.values(socketUserMap);
 
   onlineUserIds.forEach(userId => {
+    console.log(userId);
+    //io.emit('requestCreatures', {userId});
     // Получение ресурсов пользователя
     const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
     db.query(resourcesQuery, [userId], (err, resources) => {
@@ -403,7 +455,7 @@ setInterval(() => {
     // Отправка обновленных ресурсов всем подключенным клиентам
     io.emit('resourceUpdate', allResources);
   });
-}, 5000); // Обновление каждые 5 секунд
+}, 1000); // Обновление каждые 1 секунд
 
 // Функция для получения количества ресурсов из результатов запроса
 function getResourceAmount(results, type) {
