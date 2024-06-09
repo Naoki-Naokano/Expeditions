@@ -13,22 +13,57 @@ document.addEventListener('DOMContentLoaded', function() {
     userResources.forEach(resource => {
       if (resource.type === 'gold') {
         document.getElementById('goldAmount').innerText = resource.amount;
+        document.getElementById('goldAmountExp').innerText = resource.amount;
+        if (resource.amount >= 100){
+          goldAmountExp.classList.add('green');
+          goldAmountExp.classList.remove('red');
+        } else {
+          goldAmountExp.classList.add('red');
+          goldAmountExp.classList.remove('green');
+        }
       } else if (resource.type === 'wood') {
         document.getElementById('woodAmount').innerText = resource.amount;
+        document.getElementById('woodAmountExp').innerText = resource.amount;
+        if (resource.amount >= 20){
+          woodAmountExp.classList.add('green');
+          woodAmountExp.classList.remove('red');
+        } else {
+          woodAmountExp.classList.add('red');
+          woodAmountExp.classList.remove('green');
+        }
       } else if (resource.type === 'stone') {
         document.getElementById('stoneAmount').innerText = resource.amount;
+        document.getElementById('stoneAmountExp').innerText = resource.amount;
+        if (resource.amount >= 20){
+          stoneAmountExp.classList.add('green');
+          stoneAmountExp.classList.remove('red');
+        } else {
+          stoneAmountExp.classList.add('red');
+          stoneAmountExp.classList.remove('green');
+        }
       } else if (resource.type === 'clay') {
         document.getElementById('clayAmount').innerText = resource.amount;
+        document.getElementById('clayAmountExp').innerText = resource.amount;
+        if (resource.amount >= 20){
+          clayAmountExp.classList.add('green');
+          clayAmountExp.classList.remove('red');
+        } else {
+          clayAmountExp.classList.add('red');
+          clayAmountExp.classList.remove('green');
+        }
       }
     });
   });
 
-  // Обработка кнопки "торговать"
+  // Обработка кнопки "торговать и не только"
   const tradeModal = document.getElementById('tradeModal');
   const tradeWindow = document.getElementById('tradeWindow');
+  const expeditionModal = document.getElementById('expeditionModal');
   const tradeBtn = document.getElementById('tradeBtn');
+  const expeditionBtn = document.getElementById('expeditionBtn');
   const tradeModalClose = tradeModal.querySelector('.close');
   const tradeWindowClose = tradeWindow.querySelector('.close');
+  const tradeExpeditionClose = expeditionModal.querySelector('.close');
 
   tradeBtn.onclick = function() {
     tradeModal.style.display = 'block';
@@ -36,12 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
     socket.emit('getActiveUsers', { userId: currentUser.id });
   }
 
-  tradeModalClose.onclick = function() {
-    tradeModal.style.display = 'none';
-  }
+  expeditionBtn.onclick = function() {
+    expeditionModal.style.display = 'block';
 
-  tradeWindowClose.onclick = function() {
-    tradeWindow.style.display = 'none';
   }
 
   window.onclick = function(event) {
@@ -49,6 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
       tradeModal.style.display = 'none';
     } else if (event.target == tradeWindow) {
       tradeWindow.style.display = 'none';
+    } else if (event.target == expeditionModal) {
+      expeditionModal.style.display = 'none';
     }
   }
 
@@ -97,6 +131,18 @@ document.addEventListener('DOMContentLoaded', function() {
       tradeOfferModal.style.display = 'block';
     };
   });
+  
+  //Обработка отправки экспедиции
+  document.getElementById('sendExp').addEventListener('click', () => {
+    const goldAmount = document.getElementById('goldAmount').innerText;
+    const woodAmount = document.getElementById('woodAmount').innerText;
+    const stoneAmount = document.getElementById('stoneAmount').innerText;
+    const clayAmount = document.getElementById('clayAmount').innerText;
+    if (goldAmount>=100 && woodAmount>=20 && stoneAmount>=20 && clayAmount>=20){
+      socket.emit('sendExpedtion', {goldAmount, woodAmount, stoneAmount, clayAmount});
+      expeditionModal.style.display = 'none';
+    }
+  });
 
   // Закрытие модального окна
   document.querySelectorAll('.close').forEach(span => {
@@ -104,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
       tradeModal.style.display = 'none';
       tradeWindow.style.display = 'none';
       tradeOfferModal.style.display = 'none';
+      expeditionModal.style.display = 'none';
     }
   });
 

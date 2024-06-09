@@ -206,7 +206,7 @@ db.beginTransaction(err => {
     const checkFieldsQuery = `
       SELECT amount 
       FROM resources 
-      WHERE (user_id = ? AND type = ?) OR (user_id = ? AND type = ?)
+      WHERE (user_id = ? AND type = ?) OR (user_id = ? AND type = ?) OR (user_id = ? AND type = ?) OR (user_id = ? AND type = ?)
     `;
 
     db.query(checkFieldsQuery, [
@@ -246,7 +246,7 @@ db.beginTransaction(err => {
     });
   });
 });
-
+``
 
   });
 });

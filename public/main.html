@@ -7,28 +7,29 @@
 <body>
 <h1>Добро пожаловать в Expedition</h1>
 <div class="auxD">
-  <div id="resources" class="panel">
+  <div class="panel">
     <h3 class="panel-header">Ресурсы</h3>
-    <p id="gold" class="resource">Золото: <span id="goldAmount"></span></p>
-    <p id="wood" class="resource">Дерево: <span id="woodAmount"></span></p>
-    <p id="stone" class="resource">Камень: <span id="stoneAmount"></span></p>
-    <p id="clay" class="resource">Глина: <span id="clayAmount"></span></p>
+    <p class="resource">Золото: <span id="goldAmount"></span></p>
+    <p class="resource">Дерево: <span id="woodAmount"></span></p>
+    <p class="resource">Камень: <span id="stoneAmount"></span></p>
+    <p class="resource">Глина: <span id="clayAmount"></span></p>
     <button id="tradeBtn" class="panel-btn">Торговать</button>
   </div>
   <div id="creatures" class="panel">
     <h3 class="panel-header">Ваши находки</h3>
+    
     <div class="panel-btn"><button id="expeditionBtn">Отправить экспедицию</button></div>
   </div>
 </div>
 
 
-  <div id="tradeModal" class="modal">
-    <div class="modal-content users-modal-content">
-      <span class="close">&times;</span>
-      <h2>Активные пользователи</h2>
-      <div id="activeUsersList"></div> <!-- Контейнер для кнопок -->
-    </div>
+<div id="tradeModal" class="modal">
+  <div class="modal-content users-modal-content">
+    <span class="close">&times;</span>
+    <h2>Активные пользователи</h2>
+    <div id="activeUsersList"></div> <!-- Контейнер для кнопок -->
   </div>
+</div>
 
 <div id="tradeWindow" class="modal1">
   <div class="modal-content trade-modal-content">
@@ -65,6 +66,22 @@
     <p id="tradeOfferDetails"></p>
     <button id="acceptTrade">Принять</button>
     <button id="rejectTrade">Отклонить</button>
+  </div>
+</div>
+
+<div id="expeditionModal" class="modal1">
+  <div class="modal-content trade-modal-content">
+    <span class="close">&times;</span>
+    <h3>Подготовка к экпедиции</h3>
+    <div class="panelExp-container">
+      <div class="panelExp">
+        <p class="resource resourceExp">Золото: <span>100</span> / <span id="goldAmountExp"></span></p>
+        <p class="resource resourceExp">Дерево: <span>20</span> / <span id="woodAmountExp"></span></p>
+        <p class="resource resourceExp">Камень: <span>20</span> / <span id="stoneAmountExp"></span></p>
+        <p class="resource resourceExp">Глина: <span>20</span> / <span id="clayAmountExp"></span></p>
+      </div>
+      <button id="sendExp" class="panel-btn">Отправить</button>
+    </div>
   </div>
 </div>
 
