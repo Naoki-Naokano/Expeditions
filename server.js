@@ -60,7 +60,8 @@ io.on('connection', (socket) => {
         { type: 'gold', amount: 100, update_rate: 1 },
         { type: 'wood', amount: 0, update_rate: 0 },
         { type: 'stone', amount: 0, update_rate: 0 },
-        { type: 'clay', amount: 0, update_rate: 0 }
+        { type: 'clay', amount: 0, update_rate: 0 },
+        { type: 'food', amount: 0, update_rate: 1 }
       ];
 
       initialResources.forEach(resource => {

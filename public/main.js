@@ -55,6 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
           clayAmountExp.classList.add('red');
           clayAmountExp.classList.remove('green');
         }
+      } else if (resource.type === 'food') {
+        document.getElementById('foodAmount').innerText = Math.round(resource.amount);
       }
     });
   });
