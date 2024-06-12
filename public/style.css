@@ -14,14 +14,18 @@ body {
 .panel {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin: 20px;
   padding: 10px;
   border: 1px solid #ccc;
   text-align: center;
   vertical-align: top;
-  height: 200px;
+  max-height: 200px;
   overflow-y: auto;
+}
+
+.panelNbtn {
+  text-align: center;
 }
 
 .panelExp-container {

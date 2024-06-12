@@ -420,7 +420,6 @@ setInterval(() => {
   const onlineUserIds = Object.values(socketUserMap);
 
   onlineUserIds.forEach(userId => {
-    console.log(userId);
     //io.emit('requestCreatures', {userId});
     // Получение ресурсов пользователя
     const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
