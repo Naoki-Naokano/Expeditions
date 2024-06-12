@@ -51,6 +51,22 @@ body {
   text-align: left;
 }
 
+.saturation {
+  margin: 5px 5px 15px 5px;
+  text-align: left;
+}
+
+.feedBtn {
+  margin: 0px 10px;
+  padding: 2px 4px;
+  background-color: orange;
+  font-size: 13px;
+}
+
+.feedBtn:hover {
+  background-color: #cd8a10;
+}
+
 .panel-header {
   margin-top: 0
 }
@@ -241,21 +257,21 @@ button.trade-user-button:hover {
 }
 
 .common {
-  color: grey;
+  color: #656363;
 }
 
 .uncommon {
-  color: #7cbf8e;
+  color: #41b961;
 }
 
 .rare {
-  color: #6bb1d1;
+  color: #16aaed;
 }
 
 .mythic {
-  color: #dba2da;
+  color: #db75d9;
 }
 
 .legendary {
-  color: #e8c574;
+  color: #e7ae29;
 }

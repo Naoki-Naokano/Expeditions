@@ -247,7 +247,6 @@ io.on('connection', (socket) => {
         });
       });
     });
-    ``
   });
 });
 
@@ -308,52 +307,55 @@ socket.on('sendExpedition', (data) => {
   
       const creatureId = getRandomInt(1, 18);
  //////////////////////////////////////////
- const query = 'SELECT * FROM creature_list WHERE id = ?';
-  
-  db.query(query, [creatureId], (err, results) => {
-    if (err) {
-      console.error('Ошибка выполнения запроса:', err);
-      return;
-    }
-    // Проверка наличия результатов
-    if (results.length > 0) {
-      console.log('Данные существа:', results[0]);
-    } else {
-      console.log('Существо с указанным id не найдено.');
-    }
-  });
+    const query = 'SELECT * FROM creature_list WHERE id = ?';
+    
+    db.query(query, [creatureId], (err, results) => {
+      if (err) {
+        console.error('Ошибка выполнения запроса:', err);
+        return;
+      }
+      // Проверка наличия результатов
+      if (results.length > 0) {
+        console.log('Данные существа:', results[0]);
+      } else {
+        console.log('Существо с указанным id не найдено.');
+      }
+      const max_saturation = results[0].max_saturation;
  ////////////////////////////////////////////////////// 
   
     
-      const selectQuery = 'SELECT * FROM creatures WHERE user_id = ? AND creature_id = ?';
-      db.query(selectQuery, [userId, creatureId], (err, results) => {
-        if (err) {
-          console.error('Ошибка выполнения запроса SELECT:', err);
-          return;
-        }
-        
-        if (results.length > 0) {
-          // Если запись уже существует, увеличиваем amount на 1
-          const updateQuery = 'UPDATE creatures SET amount = amount + 1 WHERE user_id = ? AND creature_id = ?';
-          db.query(updateQuery, [userId, creatureId], (err, result) => {
-            if (err) {
-              console.error('Ошибка выполнения запроса UPDATE:', err);
-              return;
-            }
-            console.log('Запись обновлена.');
-          });
-        } else {
-          // Если запись не существует, создаем новую запись
-          const insertQuery = 'INSERT INTO creatures (user_id, creature_id, amount) VALUES (?, ?, 1)';
-          db.query(insertQuery, [userId, creatureId], (err, result) => {
-            if (err) {
-              console.error('Ошибка выполнения запроса INSERT:', err);
-              return;
-            }
-            console.log('Новая запись добавлена.');
-          });
-        }
+        const selectQuery = 'SELECT * FROM creatures WHERE user_id = ? AND creature_id = ?';
+        db.query(selectQuery, [userId, creatureId], (err, results) => {
+          if (err) {
+            console.error('Ошибка выполнения запроса SELECT:', err);
+            return;
+          }
+          
+          if (results.length > 0) {
+            // Если запись уже существует, увеличиваем amount на 1
+            const updateQuery = 'UPDATE creatures SET amount = amount + 1, saturation = saturation + ? WHERE user_id = ? AND creature_id = ?';
+            db.query(updateQuery, [max_saturation, userId, creatureId], (err, result) => {
+              if (err) {
+                console.error('Ошибка выполнения запроса UPDATE:', err);
+                return;
+              }
+              console.log('Запись обновлена.');
+            });
+          } else {
+            // Если запись не существует, создаем новую запись
+            const insertQuery = 'INSERT INTO creatures (user_id, creature_id, amount, saturation) VALUES (?, ?, 1, ?)';
+            db.query(insertQuery, [userId, creatureId, max_saturation], (err, result) => {
+              if (err) {
+                console.error('Ошибка выполнения запроса INSERT:', err);
+                return;
+              }
+              console.log('Новая запись добавлена.');
+            });
+          }
+        });
+      
       });
+      
     });
   });
   socket.emit('preRequestCreatures');
@@ -363,7 +365,7 @@ socket.on('requestCreatures', (data) => {
     
     const userId = data.userId;
   // Запрос для получения всех записей creatures для заданного userId
-  const getCreaturesQuery = 'SELECT creature_id, amount FROM creatures WHERE user_id = ?';
+  const getCreaturesQuery = 'SELECT creature_id, amount, saturation FROM creatures WHERE user_id = ?';
 
   db.query(getCreaturesQuery, [userId], (err, creatures) => {
     if (err) {
@@ -374,7 +376,7 @@ socket.on('requestCreatures', (data) => {
     // Переменная для хранения идентификаторов существ
     let creatureIds = creatures.map(creature => creature.creature_id);
     // Запрос для получения name и rarity для каждого creature_id из таблицы creature_list
-    const getCreatureDetailsQuery = 'SELECT id, name, rarity FROM creature_list WHERE id IN (?)';
+    const getCreatureDetailsQuery = 'SELECT id, name, rarity, max_saturation FROM creature_list WHERE id IN (?)';
 
     db.query(getCreatureDetailsQuery, [creatureIds], (err, creatureDetails) => {
       if (err) {
@@ -389,20 +391,23 @@ socket.on('requestCreatures', (data) => {
       creatures.forEach(creature => {
         // Находим соответствующие данные о существе из creatureDetails
         let details = creatureDetails.find(detail => detail.id === creature.creature_id);
-
         // Если данные о существе найдены
         if (details) {
           // Добавляем данные в объект creatureData
           creatureData.push({
             amount: creature.amount,
             name: details.name,
-            rarity: details.rarity
+            rarity: details.rarity,
+            max_saturation: details.max_saturation,
+            saturation: creature.saturation
           });
         }
       });
       // Отправляем данные через сокет
       socket.emit('getCreature', creatureData);
     });
+    } else {
+      socket.emit('noCreature');
     }
   });    
 });
@@ -417,11 +422,11 @@ socket.on('requestCreatures', (data) => {
 // Периодическое обновление ресурсов
 setInterval(() => {
   io.emit('preRequestCreatures');
+  
   // Получение всех пользователей
   const onlineUserIds = Object.values(socketUserMap);
 
   onlineUserIds.forEach(userId => {
-    //io.emit('requestCreatures', {userId});
     // Получение ресурсов пользователя
     const resourcesQuery = 'SELECT * FROM resources WHERE user_id = ?';
     db.query(resourcesQuery, [userId], (err, resources) => {
@@ -442,6 +447,41 @@ setInterval(() => {
         });
       });
     });
+
+    const saturationQuery = 'SELECT saturation, creature_id, amount FROM creatures WHERE user_id = ?';
+    db.query(saturationQuery, [userId], (err, creatures) => {
+      if (err) {
+        console.error('Ошибка получения насыщения:', err);
+        return;
+      }
+
+      creatures.forEach((creature, index) => {
+        const maxSaturationQuery = 'SELECT max_saturation FROM creature_list WHERE id = ?';
+        db.query(maxSaturationQuery, [creature.creature_id], (err, maxSaturation) => {
+          if (err) {
+            console.error('Ошибка получения максимального насыщения:', err);
+            return;
+          }
+          
+          const saturationChange = maxSaturation[0].max_saturation * 0.003 * creature.amount;
+          const updatedSaturation = creature.saturation - saturationChange;
+          if (updatedSaturation > 0){
+          const updateSaturationsQuery = 'UPDATE creatures SET saturation = ? WHERE user_id = ? AND creature_id = ?';
+            db.query(updateSaturationsQuery, [updatedSaturation, userId, creature.creature_id], (err, result) => {
+              if (err) {
+                console.error(`Ошибка обновления насыщения ${creature.saturation} для пользователя ${userId}:`, err);
+                return;
+              }
+            });
+          } else {
+            /*const updateSaturationsQuery = 'UPDATE creatures SET saturation = 0 WHERE user_id = ? AND creature_id = ?';
+            db.query(updateSaturationsQuery, [userId, creature.creature_id], () => {});*/
+            const deleteSaturationsQuery = 'DELETE FROM creatures WHERE user_id = ? AND creature_id = ?';
+            db.query(deleteSaturationsQuery, [userId, creature.creature_id], () => {});
+          }
+        });
+      });
+    });
   });
 
   // Получение обновленных ресурсов для всех пользователей
@@ -455,7 +495,7 @@ setInterval(() => {
     // Отправка обновленных ресурсов всем подключенным клиентам
     io.emit('resourceUpdate', allResources);
   });
-}, 1000); // Обновление каждые 1 секунд
+}, 1500); // Обновление каждые 1,5 секунд
 
 // Функция для получения количества ресурсов из результатов запроса
 function getResourceAmount(results, type) {

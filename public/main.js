@@ -182,16 +182,26 @@ document.addEventListener('DOMContentLoaded', function() {
   };
   
   socket.on('getCreature', (data) => {
-    
     const creatureListDiv = document.getElementById('creatureList');
     creatureListDiv.innerHTML = '';
     data.forEach((creature) => {
-      const { name, rarity, amount } = creature;
+      const { name, rarity, amount, max_saturation, saturation } = creature;
 
       // Создаем элемент <p> для отображения имени и редкости существа
       const creatureElement = document.createElement('p');
+      const creatureSaturation = document.createElement('p');
       creatureElement.textContent = `${name} (${amount}), ${rarity}`;
       creatureElement.classList.add('resource');
+      
+      creatureSaturation.textContent = `${max_saturation*amount} / ${Math.round(saturation)}`;
+      creatureSaturation.classList.add('resource');
+      creatureSaturation.classList.add('saturation');
+      
+      const button = document.createElement('button');
+      button.textContent = 'Кормить';
+      button.classList.add('feedBtn');
+      creatureSaturation.appendChild(button);
+
       switch (rarity) {
         case "common":
           creatureElement.classList.add('common');
@@ -212,8 +222,17 @@ document.addEventListener('DOMContentLoaded', function() {
           // В случае, если редкость не соответствует ни одному из вариантов, не добавляем никакой класс
           break;
       }
+      if (max_saturation*amount / 3 >= saturation){
+         creatureSaturation.classList.add('red');
+      }
       // Добавляем элемент <p> с информацией о существе в <div id="creatureList">
       creatureListDiv.appendChild(creatureElement);
+      creatureListDiv.appendChild(creatureSaturation);
     });
   });
+  socket.on('noCreature', (data) => {
+    const creatureListDiv = document.getElementById('creatureList');
+    creatureListDiv.innerHTML = '';
+  });
+  
 });
