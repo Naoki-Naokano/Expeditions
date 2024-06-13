@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tradeModal.style.display = 'block';
     // Запросить список активных пользователей
     attackCount = 0;
-    socket.emit('getActiveUsers', { userId: currentUser.id, purpose: "attack" });
+    socket.emit('getUsers', { userId: currentUser.id});
   }
 
   expeditionBtn.onclick = function() {
@@ -113,17 +113,29 @@ document.addEventListener('DOMContentLoaded', function() {
       button.innerText = `${user.username} | ${user.location}`;
       button.onclick = () => {
         // Логика выбора пользователя для торговли
+      tradeModal.style.display = 'none';
+      tradeWindow.style.display = 'block';
+      document.getElementById('selectedUser').innerText = user.username;
+      };
+      activeUsersList.appendChild(button);
+    });
+  });
+  
+  socket.on('users', (users) => {
+    const activeUsersList = document.getElementById('activeUsersList');
+    activeUsersList.innerHTML = ''; // Очистка списка
+    users.forEach(user => {
+      const button = document.createElement('button');
+      button.className = 'trade-user-button'; // Добавляем класс к кнопке
+      button.innerText = `${user.username} | ${user.location}`;
+      button.onclick = () => {
+        // Логика выбора пользователя для торговли
         tradeModal.style.display = 'none';
-        if (user.purpose == "trade"){
-          tradeWindow.style.display = 'block';
-          document.getElementById('selectedUser').innerText = user.username;
-        } else if (user.purpose == "attack"){
-          attackWindow.style.display = 'block';
-          document.getElementById('selectedUserA').innerText = user.username;
-          const attackListDiv = document.getElementById('availableCreatures');
-          attackListDiv.innerHTML = '';
-          socket.emit('getAvailableCreatures', {userId: currentUser.id});
-        }
+        attackWindow.style.display = 'block';
+        document.getElementById('selectedUserA').innerText = user.username;
+        const attackListDiv = document.getElementById('availableCreatures');
+        attackListDiv.innerHTML = '';
+        socket.emit('getAvailableCreatures', {userId: currentUser.id});
       };
       activeUsersList.appendChild(button);
     });

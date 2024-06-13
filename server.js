@@ -122,7 +122,7 @@ io.on('connection', (socket) => {
   });
   
   
-  socket.on('getActiveUsers', (data) => {
+socket.on('getActiveUsers', (data) => {
   const userId = data.userId; //Получаем пользователя, который хочет торговать
   const activeUserIds = Object.values(socketUserMap).filter(id => id !== userId); // Получаем массив идентификаторов активных пользователей
   const query = 'SELECT id, username, location FROM users WHERE id IN (?)'; // Запрос к базе данных для получения информации о пользователях по их идентификаторам
@@ -136,11 +136,23 @@ io.on('connection', (socket) => {
         id: row.id,
         username: row.username,
         location: row.location,
-        purpose: data.purpose
       }));
       socket.emit('activeUsers', activeUsers); // Отправляем список активных пользователей клиенту
     });
   };
+});
+
+socket.on('getUsers', (data) => {
+  const userId = data.userId;
+  const query = 'SELECT id, username, location FROM users WHERE id != ?';
+  db.query(query, [userId], (err, results) => {
+    const users = results.map(row => ({
+        id: row.id,
+        username: row.username,
+        location: row.location,
+      }));
+    socket.emit('users', users);
+  });
 });
 
   socket.on('confirmTrade', (data) => {
@@ -305,7 +317,6 @@ socket.on('sendExpedition', (data) => {
         });
       });
     
-  
       const creatureId = getRandomInt(1, 18);
  //////////////////////////////////////////
     const query = 'SELECT * FROM creature_list WHERE id = ?';
@@ -324,7 +335,6 @@ socket.on('sendExpedition', (data) => {
       const max_saturation = results[0].max_saturation;
  ////////////////////////////////////////////////////// 
   
-    
         const selectQuery = 'SELECT * FROM creatures WHERE user_id = ? AND creature_id = ?';
         db.query(selectQuery, [userId, creatureId], (err, results) => {
           if (err) {
@@ -354,9 +364,7 @@ socket.on('sendExpedition', (data) => {
             });
           }
         });
-      
       });
-      
     });
   });
 });
