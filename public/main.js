@@ -85,12 +85,12 @@ document.addEventListener('DOMContentLoaded', function() {
   attackBtn.onclick = function() {
     tradeModal.style.display = 'block';
     // Запросить список активных пользователей
+    attackCount = 0;
     socket.emit('getActiveUsers', { userId: currentUser.id, purpose: "attack" });
   }
 
   expeditionBtn.onclick = function() {
     expeditionModal.style.display = 'block';
-
   }
 
   window.onclick = function(event) {
@@ -119,7 +119,10 @@ document.addEventListener('DOMContentLoaded', function() {
           document.getElementById('selectedUser').innerText = user.username;
         } else if (user.purpose == "attack"){
           attackWindow.style.display = 'block';
-          document.getElementById('selectedUser').innerText = user.username;
+          document.getElementById('selectedUserA').innerText = user.username;
+          const attackListDiv = document.getElementById('availableCreatures');
+          attackListDiv.innerHTML = '';
+          socket.emit('getAvailableCreatures', {userId: currentUser.id});
         }
       };
       activeUsersList.appendChild(button);
@@ -257,6 +260,47 @@ document.addEventListener('DOMContentLoaded', function() {
   socket.on('noCreature', (data) => {
     const creatureListDiv = document.getElementById('creatureList');
     creatureListDiv.innerHTML = '';
+  });
+  
+  let attackCount = 0;
+  socket.on('AvailableCreatuers', (creature) => {
+    const attackListDiv = document.getElementById('availableCreatures');
+    const { name, rarity, amount, power } = creature;
+    const attackElement = document.createElement('button');
+    attackElement.textContent = `${name} (${amount}), ${rarity} | Сила: ${Math.round(power)}`;
+    attackElement.classList.add('creatureBtn');
+    attackElement.style.backgroundColor = 'white';
+    attackElement.onclick = () => {
+      if (attackElement.style.backgroundColor == 'white' && attackCount < 4){
+        attackElement.style.backgroundColor = 'black';
+        attackCount = attackCount + 1;
+      } else if (attackElement.style.backgroundColor == 'black'){
+        attackElement.style.backgroundColor = 'white';
+        attackCount = attackCount - 1;
+      }
+      console.log(attackCount);
+    };
+    switch (rarity) {
+        case "common":
+          attackElement.classList.add('common');
+          break;
+        case "uncommon":
+          attackElement.classList.add('uncommon');
+          break;
+        case "rare":
+          attackElement.classList.add('rare');
+          break;
+        case "mythic":
+          attackElement.classList.add('mythic');
+          break;
+        case "legendary":
+          attackElement.classList.add('legendary');
+          break;
+        default:
+          // В случае, если редкость не соответствует ни одному из вариантов, не добавляем никакой класс
+          break;
+      }
+    attackListDiv.appendChild(attackElement);
   });
   
 });

@@ -28,6 +28,10 @@ body {
   text-align: center;
 }
 
+.selected {
+  background-color: grey;
+}
+
 #attackBtn {
   background-color: #e92d2d;
   margin: 20px;
@@ -59,6 +63,7 @@ body {
 .resource {
   margin: 5px;
   text-align: left;
+  white-space: nowrap;
 }
 
 .saturation {
@@ -151,7 +156,10 @@ progress {
 }
 
 .users-modal-content{width: 80%;}
-.trade-modal-content{width: 30%;}
+.trade-modal-content{
+  display: inline-block;
+  width: auto;
+  }
 
 /* Стили для закрывающей кнопки */
 .close {
@@ -186,6 +194,18 @@ button.trade-user-button {
 /* Стили при наведении на кнопку */
 button.trade-user-button:hover {
   background-color: #238027;
+}
+
+button.creatureBtn {
+  background-color: white;
+  margin: 0;
+  padding: 1px;
+  border: solid 1px white;
+  display: block;
+}
+
+button.creatureBtn:hover {
+  background-color: #e3e3e3;
 }
 
 .modal1 {
