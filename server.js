@@ -160,6 +160,57 @@ socket.on('getUsers', (data) => {
     io.emit('tradeOffer', {user, data});
   });
   
+    const queryDatabase = (query, params) => {
+      return new Promise((resolve, reject) => {
+          db.query(query, params, (err, result) => {
+              if (err) {
+                  return reject(err);
+              }
+              resolve(result);
+          });
+      });
+  };
+
+  const calculateDefence = async (userId) => {
+      let defence = 0;
+      const creatures = await queryDatabase('SELECT id, amount, saturation, creature_id FROM creatures WHERE user_id = ?', [userId]);
+      const promises = creatures.map(async (creature) => {
+          const info = await queryDatabase('SELECT max_saturation, power FROM creature_list WHERE id = ?', [creature.creature_id]);
+          defence += info[0].power / info[0].max_saturation * creature.saturation;
+      });
+      await Promise.all(promises);
+      return defence;
+  };
+
+  const calculateAttack = async (attackSquad) => {
+      let attack = 0;
+      const promises = attackSquad.map(async (attackCreature) => {
+          const creatures = await queryDatabase('SELECT id, amount, saturation, creature_id FROM creatures WHERE id = ?', [attackCreature]);
+          const info = await queryDatabase('SELECT max_saturation, power FROM creature_list WHERE id = ?', [creatures[0].creature_id]);
+          attack += info[0].power / info[0].max_saturation * creatures[0].saturation;
+      });
+      await Promise.all(promises);
+      return attack;
+  };
+
+  socket.on('confirmAttack', async (data) => {
+      const user = data.selectedUser;
+      try {
+          const userResult = await queryDatabase('SELECT id FROM users WHERE username = ?', [user]);
+          const userId = userResult[0].id;
+
+          const defence = await calculateDefence(userId);
+          const attack = await calculateAttack(data.attackSquad);
+
+          console.log('Defence:', defence);
+          console.log('Attack:', attack);
+          
+          
+      } catch (err) {
+          console.error('Error:', err);
+      }
+  });
+  
   socket.on('tradeAccept', (tradeData) => {
   const { sale, sale_quantity, purchase, purchase_quantity, selectedUser, requesterName } = tradeData;
   console.log(tradeData);
@@ -383,7 +434,7 @@ socket.on('requestCreatures', (data) => {
       // Переменная для хранения идентификаторов существ
       let creatureIds = creatures.map(creature => creature.creature_id);
       // Запрос для получения name и rarity для каждого creature_id из таблицы creature_list
-      const getCreatureDetailsQuery = 'SELECT id, name, rarity, max_saturation FROM creature_list WHERE id IN (?)';
+      const getCreatureDetailsQuery = 'SELECT id, name, rarity, max_saturation, power FROM creature_list WHERE id IN (?)';
       db.query(getCreatureDetailsQuery, [creatureIds], (err, creatureDetails) => {
         if (err) {
           console.error('Ошибка выполнения запроса для получения деталей существ:', err);
@@ -407,7 +458,8 @@ socket.on('requestCreatures', (data) => {
               max_saturation: details.max_saturation,
               saturation: creature.saturation,
               id: creature.id,
-              userId: userId
+              userId: userId,
+              power: details.power
             });
           }
         });
@@ -444,16 +496,17 @@ socket.on('feedCreature', (feedingData) => {
 });
 
 socket.on('getAvailableCreatures', (user) => {
-  const getCreaturesQuery = 'SELECT creature_id, amount FROM creatures WHERE user_id = ?';
+  const getCreaturesQuery = 'SELECT creature_id, amount, saturation, id FROM creatures WHERE user_id = ?';
   db.query(getCreaturesQuery, [user.userId], (err, creatures) => {
     creatures.forEach((creature, index) => {
-      const getInfoQuery = 'SELECT name, rarity, power FROM creature_list WHERE id = ?';
+      const getInfoQuery = 'SELECT name, rarity, power, max_saturation FROM creature_list WHERE id = ?';
       db.query(getInfoQuery, [creature.creature_id], (err, info) => {
         const name = info[0].name;
         const rarity = info[0].rarity;
-        const power = info[0].power * creatures[index].amount;
         const amount = creatures[index].amount;
-        socket.emit('AvailableCreatuers', { name, rarity, amount, power });
+        const id = creatures[index].id;
+        const power = info[0].power * amount / (info[0].max_saturation * amount) * creatures[index].saturation;
+        socket.emit('AvailableCreatures', { name, rarity, amount, power, id });
       });
     });
   });

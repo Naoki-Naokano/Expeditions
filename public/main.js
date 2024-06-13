@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Получаем данные пользователя из localStorage
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
   let currentTradeOffer = null;  // Переменная для хранения текущего предложения
+  let attackSquad = [];
   
   socket.emit('pageLoaded', { userId: currentUser.id });
   socket.emit('requestCreatures', {userId: currentUser.id});
@@ -86,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
     tradeModal.style.display = 'block';
     // Запросить список активных пользователей
     attackCount = 0;
+    attackSquad = [];
     socket.emit('getUsers', { userId: currentUser.id});
   }
 
@@ -129,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
       button.className = 'trade-user-button'; // Добавляем класс к кнопке
       button.innerText = `${user.username} | ${user.location}`;
       button.onclick = () => {
-        // Логика выбора пользователя для торговли
+        // Логика выбора пользователя для атаки
         tradeModal.style.display = 'none';
         attackWindow.style.display = 'block';
         document.getElementById('selectedUserA').innerText = user.username;
@@ -203,8 +205,15 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   document.getElementById('rejectTrade').addEventListener('click', () => {
-    // Логика отклонения торгового предложения
     tradeOfferModal.style.display = 'none';
+  });
+  
+  document.getElementById('confirmAttack').addEventListener('click', () => {
+    const selectedUser = document.getElementById('selectedUserA').innerText;
+    if (attackSquad.length > 0){
+      socket.emit('confirmAttack', {selectedUser, attackSquad});
+      attackWindow.style.display = 'none';
+    }
   });
 
   window.onclick = function(event) {
@@ -217,12 +226,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const creatureListDiv = document.getElementById('creatureList');
     creatureListDiv.innerHTML = '';
     data.forEach((creature) => {
-      const { name, rarity, amount, max_saturation, saturation, id, userId } = creature;
+      const { name, rarity, amount, max_saturation, saturation, id, userId, power } = creature;
 
       // Создаем элемент <p> для отображения имени и редкости существа
       const creatureElement = document.createElement('p');
       const creatureSaturation = document.createElement('p');
-      creatureElement.textContent = `${name} (${amount}), ${rarity}`;
+      const calcPower = power / max_saturation * saturation;
+      creatureElement.textContent = `${name} (${amount}), ${rarity} | Сила: ${Math.round(calcPower)}`;
       creatureElement.classList.add('resource');
       
       creatureSaturation.textContent = `${max_saturation*amount} / ${Math.round(saturation)}`;
@@ -275,9 +285,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
   
   let attackCount = 0;
-  socket.on('AvailableCreatuers', (creature) => {
+  socket.on('AvailableCreatures', (creature) => {
     const attackListDiv = document.getElementById('availableCreatures');
-    const { name, rarity, amount, power } = creature;
+    const { name, rarity, amount, power, id } = creature;
     const attackElement = document.createElement('button');
     attackElement.textContent = `${name} (${amount}), ${rarity} | Сила: ${Math.round(power)}`;
     attackElement.classList.add('creatureBtn');
@@ -286,9 +296,11 @@ document.addEventListener('DOMContentLoaded', function() {
       if (attackElement.style.backgroundColor == 'white' && attackCount < 4){
         attackElement.style.backgroundColor = 'black';
         attackCount = attackCount + 1;
+        attackSquad.push(id);
       } else if (attackElement.style.backgroundColor == 'black'){
         attackElement.style.backgroundColor = 'white';
         attackCount = attackCount - 1;
+        attackSquad = attackSquad.filter(item => item !== id);
       }
     };
     
