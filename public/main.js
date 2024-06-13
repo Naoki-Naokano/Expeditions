@@ -65,8 +65,10 @@ document.addEventListener('DOMContentLoaded', function() {
   const tradeModal = document.getElementById('tradeModal');
   const tradeWindow = document.getElementById('tradeWindow');
   const expeditionModal = document.getElementById('expeditionModal');
+  
   const tradeBtn = document.getElementById('tradeBtn');
   const expeditionBtn = document.getElementById('expeditionBtn');
+  
   const tradeModalClose = tradeModal.querySelector('.close');
   const tradeWindowClose = tradeWindow.querySelector('.close');
   const tradeExpeditionClose = expeditionModal.querySelector('.close');
@@ -185,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const creatureListDiv = document.getElementById('creatureList');
     creatureListDiv.innerHTML = '';
     data.forEach((creature) => {
-      const { name, rarity, amount, max_saturation, saturation } = creature;
+      const { name, rarity, amount, max_saturation, saturation, id, userId } = creature;
 
       // Создаем элемент <p> для отображения имени и редкости существа
       const creatureElement = document.createElement('p');
@@ -196,10 +198,17 @@ document.addEventListener('DOMContentLoaded', function() {
       creatureSaturation.textContent = `${max_saturation*amount} / ${Math.round(saturation)}`;
       creatureSaturation.classList.add('resource');
       creatureSaturation.classList.add('saturation');
+      const progressBar = document.createElement('progress');
+      progressBar.value = saturation; // Текущее значение насыщенности
+      progressBar.max = max_saturation * amount; // Максимальная насыщенность
+      creatureSaturation.appendChild(progressBar);
       
       const button = document.createElement('button');
       button.textContent = 'Кормить';
       button.classList.add('feedBtn');
+      button.onclick = () => {
+        socket.emit('feedCreature',{ id, amount, max_saturation, saturation, userId });
+      };
       creatureSaturation.appendChild(button);
 
       switch (rarity) {

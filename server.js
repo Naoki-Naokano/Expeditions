@@ -358,14 +358,12 @@ socket.on('sendExpedition', (data) => {
       
     });
   });
-  socket.emit('preRequestCreatures');
 });
 
 socket.on('requestCreatures', (data) => {
-    
-    const userId = data.userId;
+  const userId = data.userId;
   // Запрос для получения всех записей creatures для заданного userId
-  const getCreaturesQuery = 'SELECT creature_id, amount, saturation FROM creatures WHERE user_id = ?';
+  const getCreaturesQuery = 'SELECT creature_id, amount, saturation, id FROM creatures WHERE user_id = ?';
 
   db.query(getCreaturesQuery, [userId], (err, creatures) => {
     if (err) {
@@ -373,43 +371,52 @@ socket.on('requestCreatures', (data) => {
       return;
     }
     if (creatures.length > 0) {
-    // Переменная для хранения идентификаторов существ
-    let creatureIds = creatures.map(creature => creature.creature_id);
-    // Запрос для получения name и rarity для каждого creature_id из таблицы creature_list
-    const getCreatureDetailsQuery = 'SELECT id, name, rarity, max_saturation FROM creature_list WHERE id IN (?)';
-
-    db.query(getCreatureDetailsQuery, [creatureIds], (err, creatureDetails) => {
-      if (err) {
-        console.error('Ошибка выполнения запроса для получения деталей существ:', err);
-        return;
-      }
-
-      // Создаем объект для хранения данных о существах { amount, name, rarity }
-      let creatureData = [];
-
-      // Для каждой записи creatures
-      creatures.forEach(creature => {
-        // Находим соответствующие данные о существе из creatureDetails
-        let details = creatureDetails.find(detail => detail.id === creature.creature_id);
-        // Если данные о существе найдены
-        if (details) {
-          // Добавляем данные в объект creatureData
-          creatureData.push({
-            amount: creature.amount,
-            name: details.name,
-            rarity: details.rarity,
-            max_saturation: details.max_saturation,
-            saturation: creature.saturation
-          });
+      // Переменная для хранения идентификаторов существ
+      let creatureIds = creatures.map(creature => creature.creature_id);
+      // Запрос для получения name и rarity для каждого creature_id из таблицы creature_list
+      const getCreatureDetailsQuery = 'SELECT id, name, rarity, max_saturation FROM creature_list WHERE id IN (?)';
+      db.query(getCreatureDetailsQuery, [creatureIds], (err, creatureDetails) => {
+        if (err) {
+          console.error('Ошибка выполнения запроса для получения деталей существ:', err);
+          return;
         }
+
+        // Создаем объект для хранения данных о существах { amount, name, rarity }
+        let creatureData = [];
+
+        // Для каждой записи creatures
+        creatures.forEach(creature => {
+          // Находим соответствующие данные о существе из creatureDetails
+          let details = creatureDetails.find(detail => detail.id === creature.creature_id);
+          // Если данные о существе найдены
+          if (details) {
+            // Добавляем данные в объект creatureData
+            creatureData.push({
+              amount: creature.amount,
+              name: details.name,
+              rarity: details.rarity,
+              max_saturation: details.max_saturation,
+              saturation: creature.saturation,
+              id: creature.id,
+              userId: userId
+            });
+          }
+        });
+        // Отправляем данные через сокет
+        socket.emit('getCreature', creatureData);
       });
-      // Отправляем данные через сокет
-      socket.emit('getCreature', creatureData);
-    });
     } else {
       socket.emit('noCreature');
     }
-  });    
+  });
+});
+
+socket.on('feedCreature', (feedingData) => {
+  const { id, amount, max_saturation, saturation, userId } = feedingData;
+  const consumeFoodQuery = 'UPDATE resources SET amount = amount - ? WHERE user_id = ? AND type = "food"';
+  db.query(consumeFoodQuery, [max_saturation * amount - saturation, userId]);
+  const feedCreatureQuery = 'UPDATE creatures SET saturation = ? WHERE id = ?';
+  db.query(feedCreatureQuery, [max_saturation * amount, id]);
 });
 
   socket.on('disconnect', () => {

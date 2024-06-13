@@ -113,6 +113,11 @@ button:hover {
   background-color: #0056b3;
 }
 
+progress {
+  margin-left: 10px;
+  width: 30%;
+}
+
 /* Стили для модального окна */
 .modal {
   display: none; /* Скрыть модальное окно по умолчанию */
