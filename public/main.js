@@ -327,4 +327,11 @@ document.addEventListener('DOMContentLoaded', function() {
     attackListDiv.appendChild(attackElement);
   });
   
+  socket.on('win', () => {
+    alert("ПОБЕДА!!!");
+  });
+  socket.on('lose', () => {
+    alert("не повезло :(");
+  });
+  
 });

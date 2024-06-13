@@ -201,14 +201,106 @@ socket.on('getUsers', (data) => {
 
           const defence = await calculateDefence(userId);
           const attack = await calculateAttack(data.attackSquad);
-
+          
           console.log('Defence:', defence);
           console.log('Attack:', attack);
           
+          const battleRatio = defence / attack;
+          const winChance = Math.round(49.6 - 17.4 * Math.log(battleRatio));
+          const winNumber = getRandomInt(1, 100);
+          if (winNumber <= winChance){
+            socket.emit('win');
+            const getAttackUser = 'SELECT user_id FROM creatures WHERE id = ?';
+            db.query(getAttackUser, [data.attackSquad[0]], (err, user) => {
+              attackUser = user[0].user_id;
+              const stealResources = 'SELECT amount, type FROM resources WHERE user_id = ?';
+              db.query(stealResources, [userId], (err, resources) => {
+                let getChange;
+                resources.forEach(resource => {
+                  const change = resource.amount * 0.05 + 2 * getRandomInt(1, 100);
+                  if (change > resource.amount){
+                    getChange = resource.amount;
+                  } else {
+                    getChange = change;
+                  }
+                  const winQuery = 'UPDATE resources SET amount = amount + ? WHERE user_id = ? AND type = ?';
+                  db.query(winQuery, [getChange, attackUser, resource.type]);
+                  const loseQuery = 'UPDATE resources SET amount = amount - ? WHERE user_id = ? AND type = ?';
+                  db.query(loseQuery, [getChange, userId, resource.type]);
+                });
+              });
+            });
+          } else {
+            socket.emit('lose');
+          }
+          console.log("Шанс победы: ", winChance);
+          console.log("Победа, если это число меньше предыдущего: ", winNumber); 
+          
+          
+          const getCreatures = 'SELECT id FROM creatures WHERE user_id = ?';
+          db.query(getCreatures, [userId], (err, creatures) => {
+            creatures.forEach(creature => {
+              const getCreatureId = 'SELECT creature_id FROM creatures WHERE id = ?';
+              db.query(getCreatureId, [creature.id], (err, cId) => {
+                const getCreatureRarity = 'SELECT rarity FROM creature_list WHERE id = ?';
+                db.query(getCreatureRarity, [cId[0].creature_id], (err, rarity) => {
+                  const cRarity = rarity[0].rarity;
+                  const chance = getRandomInt(1, 100);
+                  const numAdv = data.attackSquad.length / creatures.length;
+                  console.log("numAdv=", numAdv);
+                  if (cRarity == "common" && chance <= 50 * numAdv){
+                    const death = 'DELETE FROM creatures WHERE id = ?';
+                    db.query(death, [creature.id]);
+                  } else if (cRarity == "uncommon" && chance <= 35 * numAdv){
+                    const death = 'DELETE FROM creatures WHERE id = ?';
+                    db.query(death, [creature.id]);
+                  } else if (cRarity == "rare" && chance <= 25 * numAdv){
+                    const death = 'DELETE FROM creatures WHERE id = ?';
+                    db.query(death, [creature.id]);
+                  } else if (cRarity == "mythic" && chance <= 10 * numAdv){
+                    const death = 'DELETE FROM creatures WHERE id = ?';
+                    db.query(death, [creature.id]);
+                  } else if (cRarity == "legendary" && chance <= 5 * numAdv){
+                    const death = 'DELETE FROM creatures WHERE id = ?';
+                    db.query(death, [creature.id]);
+                  }
+                });
+              });
+            });
+          });
           
       } catch (err) {
           console.error('Error:', err);
       }
+      
+      data.attackSquad.forEach(attacker => {
+        const getCreatureId = 'SELECT creature_id FROM creatures WHERE id = ?';
+        db.query(getCreatureId, [attacker], (err, cId) => {
+          const creatureQuery = 'SELECT rarity FROM creature_list WHERE id = ?';
+          db.query(creatureQuery, [cId[0].creature_id], (err, info) => {
+            const chance = getRandomInt(1, 100);
+            if (info[0].rarity == "common" && chance <= 50){
+              const death = 'DELETE FROM creatures WHERE id = ?';
+              db.query(death, [attacker]);
+            } else if (info[0].rarity == "uncommon" && chance <= 35){
+              const death = 'DELETE FROM creatures WHERE id = ?';
+              db.query(death, [attacker]);
+            } else if (info[0].rarity == "rare" && chance <= 25){
+              const death = 'DELETE FROM creatures WHERE id = ?';
+              db.query(death, [attacker]);
+            } else if (info[0].rarity == "mythic" && chance <= 10){
+              const death = 'DELETE FROM creatures WHERE id = ?';
+              db.query(death, [attacker]);
+            } else if (info[0].rarity == "legendary" && chance <= 5){
+              const death = 'DELETE FROM creatures WHERE id = ?';
+              db.query(death, [attacker]);
+            }
+          });
+        });
+      });
+      
+      
+  
   });
   
   socket.on('tradeAccept', (tradeData) => {
