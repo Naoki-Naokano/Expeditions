@@ -65,18 +65,27 @@ document.addEventListener('DOMContentLoaded', function() {
   const tradeModal = document.getElementById('tradeModal');
   const tradeWindow = document.getElementById('tradeWindow');
   const expeditionModal = document.getElementById('expeditionModal');
+  const attackWindow = document.getElementById('attackWindow');
   
   const tradeBtn = document.getElementById('tradeBtn');
   const expeditionBtn = document.getElementById('expeditionBtn');
+  const attackBtn = document.getElementById('attackBtn');
   
   const tradeModalClose = tradeModal.querySelector('.close');
   const tradeWindowClose = tradeWindow.querySelector('.close');
   const tradeExpeditionClose = expeditionModal.querySelector('.close');
+  const attackWindowClose = attackWindow.querySelector('.close');
 
   tradeBtn.onclick = function() {
     tradeModal.style.display = 'block';
     // Запросить список активных пользователей
-    socket.emit('getActiveUsers', { userId: currentUser.id });
+    socket.emit('getActiveUsers', { userId: currentUser.id, purpose: "trade" });
+  }
+  
+  attackBtn.onclick = function() {
+    tradeModal.style.display = 'block';
+    // Запросить список активных пользователей
+    socket.emit('getActiveUsers', { userId: currentUser.id, purpose: "attack" });
   }
 
   expeditionBtn.onclick = function() {
@@ -105,8 +114,13 @@ document.addEventListener('DOMContentLoaded', function() {
       button.onclick = () => {
         // Логика выбора пользователя для торговли
         tradeModal.style.display = 'none';
-        tradeWindow.style.display = 'block';
-        document.getElementById('selectedUser').innerText = user.username;
+        if (user.purpose == "trade"){
+          tradeWindow.style.display = 'block';
+          document.getElementById('selectedUser').innerText = user.username;
+        } else if (user.purpose == "attack"){
+          attackWindow.style.display = 'block';
+          document.getElementById('selectedUser').innerText = user.username;
+        }
       };
       activeUsersList.appendChild(button);
     });
@@ -160,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
       tradeWindow.style.display = 'none';
       tradeOfferModal.style.display = 'none';
       expeditionModal.style.display = 'none';
+      attackWindow.style.display = 'none';
     }
   });
 

@@ -57,10 +57,10 @@ io.on('connection', (socket) => {
 
       // Вставка начальных ресурсов для нового пользователя
       const initialResources = [
-        { type: 'gold', amount: 100, update_rate: 1 },
-        { type: 'wood', amount: 0, update_rate: 0 },
-        { type: 'stone', amount: 0, update_rate: 0 },
-        { type: 'clay', amount: 0, update_rate: 0 },
+        { type: 'gold', amount: 100, update_rate: 2 },
+        { type: 'wood', amount: 0, update_rate: 1 },
+        { type: 'stone', amount: 0, update_rate: 1 },
+        { type: 'clay', amount: 0, update_rate: 1 },
         { type: 'food', amount: 0, update_rate: 1 }
       ];
 
@@ -135,7 +135,8 @@ io.on('connection', (socket) => {
       const activeUsers = results.map(row => ({
         id: row.id,
         username: row.username,
-        location: row.location
+        location: row.location,
+        purpose: data.purpose
       }));
       socket.emit('activeUsers', activeUsers); // Отправляем список активных пользователей клиенту
     });
@@ -420,7 +421,7 @@ socket.on('feedCreature', (feedingData) => {
     console.error('Ошибка выполнения запроса для получения ресурсов:', err);
     return;
     }
-    if (result[0] - (max_saturation * amount - saturation) >= 0){
+    if (food - (max_saturation * amount - saturation) >= 0){
       const consumeFoodQuery = 'UPDATE resources SET amount = amount - ? WHERE user_id = ? AND type = "food"';
       db.query(consumeFoodQuery, [max_saturation * amount - saturation, userId]);
       const feedCreatureQuery = 'UPDATE creatures SET saturation = ? WHERE id = ?';
