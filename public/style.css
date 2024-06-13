@@ -28,6 +28,16 @@ body {
   text-align: center;
 }
 
+#attackBtn {
+  background-color: #e92d2d;
+  margin: 20px;
+  font-size: 18px;
+}
+
+#attackBtn:hover {
+  background-color: #b52828;
+}
+
 .panelExp-container {
   display: flex;
   flex-direction: column;
@@ -61,6 +71,7 @@ body {
   padding: 2px 4px;
   background-color: orange;
   font-size: 13px;
+  border-radius: 5px;
 }
 
 .feedBtn:hover {

@@ -413,10 +413,25 @@ socket.on('requestCreatures', (data) => {
 
 socket.on('feedCreature', (feedingData) => {
   const { id, amount, max_saturation, saturation, userId } = feedingData;
-  const consumeFoodQuery = 'UPDATE resources SET amount = amount - ? WHERE user_id = ? AND type = "food"';
-  db.query(consumeFoodQuery, [max_saturation * amount - saturation, userId]);
-  const feedCreatureQuery = 'UPDATE creatures SET saturation = ? WHERE id = ?';
-  db.query(feedCreatureQuery, [max_saturation * amount, id]);
+  const countFoodQuery = 'SELECT amount FROM resources WHERE user_id = ? AND type = "food"';
+  db.query(countFoodQuery, [userId], (err, result) => {
+    const food = result[0].amount;
+    if (err) {
+    console.error('Ошибка выполнения запроса для получения ресурсов:', err);
+    return;
+    }
+    if (result[0] - (max_saturation * amount - saturation) >= 0){
+      const consumeFoodQuery = 'UPDATE resources SET amount = amount - ? WHERE user_id = ? AND type = "food"';
+      db.query(consumeFoodQuery, [max_saturation * amount - saturation, userId]);
+      const feedCreatureQuery = 'UPDATE creatures SET saturation = ? WHERE id = ?';
+      db.query(feedCreatureQuery, [max_saturation * amount, id]);
+    } else if (saturation + food <= max_saturation * amount){
+        const consumeFoodQuery = 'UPDATE resources SET amount = 0 WHERE user_id = ? AND type = "food"';
+        db.query(consumeFoodQuery, [userId]);
+        const feedCreatureQuery = 'UPDATE creatures SET saturation = ? WHERE id = ?';
+        db.query(feedCreatureQuery, [saturation + food, id]);
+      }
+  });
 });
 
   socket.on('disconnect', () => {
