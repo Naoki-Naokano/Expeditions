@@ -278,8 +278,8 @@ document.addEventListener('DOMContentLoaded', function() {
         attackElement.style.backgroundColor = 'white';
         attackCount = attackCount - 1;
       }
-      console.log(attackCount);
     };
+    
     switch (rarity) {
         case "common":
           attackElement.classList.add('common');

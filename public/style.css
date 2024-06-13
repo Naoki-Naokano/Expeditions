@@ -32,13 +32,7 @@ body {
   background-color: grey;
 }
 
-#attackBtn {
-  background-color: #e92d2d;
-  margin: 20px;
-  font-size: 18px;
-}
-
-#attackBtn:hover {
+.attack:hover {
   background-color: #b52828;
 }
 
@@ -53,6 +47,18 @@ body {
   display: inline-block;
   border: 1px solid #ccc;
   margin-bottom: 10px;
+}
+
+.attack {
+  background-color: #e92d2d;
+  margin: 20px;
+  font-size: 18px;
+}
+
+#acceptAttack {
+  padding: 5px 20px;
+  font-size: 14px;
+  margin: 10px 0 0;
 }
 
 .panel-btn {
